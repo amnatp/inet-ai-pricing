@@ -1,3 +1,9 @@
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useState } from 'react';
 import { ApiError, api } from '../api/client';
 import type { CustomerTier, MarkupType, PricingRule, PricingRuleInput, TransportMode } from '../api/types';
@@ -109,47 +115,47 @@ export default function RulesPage() {
 
       {error && <div className="banner error">{error}</div>}
 
-      <div className="card">
+      <Card className="card">
         <div className="toolbar">
-          <button onClick={() => void load()} disabled={loading}>
+          <Button variant="outline" onClick={() => void load()} disabled={loading}>
             {loading ? <Spinner label="Loading…" /> : 'Refresh'}
-          </button>
+          </Button>
           <div className="spacer" />
-          <button className="primary" onClick={() => setEditing({ id: null, draft: { ...EMPTY } })}>
+          <Button variant="default" className="primary" onClick={() => setEditing({ id: null, draft: { ...EMPTY } })}>
             New rule
-          </button>
+          </Button>
         </div>
 
-        <table>
-          <thead>
-            <tr>
-              <th className="num">Priority</th>
-              <th>Rule</th>
-              <th>Conditions</th>
-              <th>Action</th>
-              <th className="num">Specificity</th>
-              <th>Flags</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="num">Priority</TableHead>
+              <TableHead>Rule</TableHead>
+              <TableHead>Conditions</TableHead>
+              <TableHead>Action</TableHead>
+              <TableHead className="num">Specificity</TableHead>
+              <TableHead>Flags</TableHead>
+              <TableHead />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {rules.map((r) => (
-              <tr key={r.id}>
-                <td className="num mono">{r.priority}</td>
-                <td>
+              <TableRow key={r.id}>
+                <TableCell className="num mono">{r.priority}</TableCell>
+                <TableCell>
                   <strong>{r.name}</strong>
                   {r.description && <div className="small muted">{r.description}</div>}
-                </td>
-                <td style={{ whiteSpace: 'normal', maxWidth: 320 }}>{conditionSummary(r)}</td>
-                <td>{actionSummary(r)}</td>
-                <td className="num mono">{r.specificity}</td>
-                <td>
-                  {!r.isActive && <span className="tag muted">Inactive</span>}{' '}
-                  {r.isFallback && <span className="tag warn">Fallback</span>}{' '}
-                  {r.stopProcessing && <span className="tag">Stops</span>}
-                </td>
-                <td>
-                  <button
+                </TableCell>
+                <TableCell style={{ whiteSpace: 'normal', maxWidth: 320 }}>{conditionSummary(r)}</TableCell>
+                <TableCell>{actionSummary(r)}</TableCell>
+                <TableCell className="num mono">{r.specificity}</TableCell>
+                <TableCell>
+                  {!r.isActive && <Badge variant="secondary" className="tag muted">Inactive</Badge>}{' '}
+                  {r.isFallback && <Badge variant="secondary" className="tag warn">Fallback</Badge>}{' '}
+                  {r.stopProcessing && <Badge variant="secondary" className="tag">Stops</Badge>}
+                </TableCell>
+                <TableCell>
+                  <Button variant="ghost"
                     className="link"
                     onClick={() => {
                       const { id: _id, specificity: _s, updatedAtUtc: _u, ...draft } = r;
@@ -157,23 +163,23 @@ export default function RulesPage() {
                     }}
                   >
                     Edit
-                  </button>
-                  <button className="link danger" onClick={() => void remove(r)}>
+                  </Button>
+                  <Button variant="destructive" className="link danger" onClick={() => void remove(r)}>
                     Delete
-                  </button>
-                </td>
-              </tr>
+                  </Button>
+                </TableCell>
+              </TableRow>
             ))}
             {rules.length === 0 && !loading && (
-              <tr>
-                <td colSpan={7} className="muted">
+              <TableRow>
+                <TableCell colSpan={7} className="muted">
                   No rules yet.
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             )}
-          </tbody>
-        </table>
-      </div>
+          </TableBody>
+        </Table>
+      </Card>
 
       {editing && (
         <RuleEditor
@@ -210,7 +216,7 @@ function RuleEditor({
     setForm((f) => ({ ...f, [key]: value }));
 
   const text = (key: keyof PricingRuleInput) => (
-    <input
+    <Input
       value={(form[key] as string | null) ?? ''}
       onChange={(e) => set(key, (e.target.value || null) as PricingRuleInput[typeof key])}
     />
@@ -245,10 +251,10 @@ function RuleEditor({
       footer={
         <>
           <span className="spacer" />
-          <button onClick={onCancel}>Cancel</button>
-          <button className="primary" onClick={() => void save()} disabled={saving}>
+          <Button variant="outline" onClick={onCancel}>Cancel</Button>
+          <Button variant="default" className="primary" onClick={() => void save()} disabled={saving}>
             {saving ? <Spinner label="Saving…" /> : 'Save rule'}
-          </button>
+          </Button>
         </>
       }
     >
@@ -261,24 +267,24 @@ function RuleEditor({
 
       <div className="grid">
         <Field label="Rule name">
-          <input value={form.name} onChange={(e) => set('name', e.target.value)} />
+          <Input value={form.name} onChange={(e) => set('name', e.target.value)} />
         </Field>
         <Field label="Priority" hint="Lower runs first">
-          <input
+          <Input
             type="number"
             value={form.priority}
             onChange={(e) => set('priority', Number(e.target.value))}
           />
         </Field>
         <Field label="Effective from">
-          <input
+          <Input
             type="date"
             value={form.effectiveFrom ?? ''}
             onChange={(e) => set('effectiveFrom', e.target.value || null)}
           />
         </Field>
         <Field label="Effective to">
-          <input
+          <Input
             type="date"
             value={form.effectiveTo ?? ''}
             onChange={(e) => set('effectiveTo', e.target.value || null)}
@@ -288,7 +294,7 @@ function RuleEditor({
 
       <div className="field" style={{ marginTop: 12 }}>
         <label htmlFor="rule-description">Description</label>
-        <textarea
+        <Textarea
           id="rule-description"
           rows={2}
           value={form.description ?? ''}
@@ -354,7 +360,7 @@ function RuleEditor({
           </select>
         </Field>
         <Field label={isPercent ? 'Value (%)' : 'Value (amount)'}>
-          <input
+          <Input
             type="number"
             step="0.01"
             value={form.markupValue}
@@ -362,14 +368,14 @@ function RuleEditor({
           />
         </Field>
         <Field label="Currency" hint="Blank uses the rate currency">
-          <input
+          <Input
             value={form.currency ?? ''}
             maxLength={3}
             onChange={(e) => set('currency', e.target.value.toUpperCase() || null)}
           />
         </Field>
         <Field label="Min markup" hint="Clamp, per unit">
-          <input
+          <Input
             type="number"
             step="0.01"
             value={form.minMarkup ?? ''}
@@ -377,7 +383,7 @@ function RuleEditor({
           />
         </Field>
         <Field label="Max markup" hint="Clamp, per unit">
-          <input
+          <Input
             type="number"
             step="0.01"
             value={form.maxMarkup ?? ''}

@@ -1,3 +1,5 @@
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Spinner } from '../components/ui';
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
@@ -39,17 +41,17 @@ export default function RequestRateWorkflow({ request, onSave, disabled }: { req
     <p className="muted">Add buying costs and an optional selling price. Saving marks this request Ready.</p>
     {error && <div role="alert" className="banner error">{error}</div>}
     {loading ? <p><Spinner label="Loading rate setup…" /></p> : details && <>
-      <div className="card"><h3>Buying rate & selling price</h3>
+      <Card className="card"><h3>Buying rate & selling price</h3>
         {details.rate ? <p><strong>{details.rate.rateCode}</strong><br />{details.rate.portOfLoading} → {details.rate.portOfDestination}<br />
           {details.rate.availableSizes.length ? details.rate.availableSizes.map(size => <span key={size}>{size}: {money(details.rate!.totalCostBySize[size], details.rate!.currency)} · </span>) : money(details.rate.totalCostBase || 0, details.rate.currency)}
           <br /><span className="muted">Valid {details.rate.validFrom} to {details.rate.validTo}</span></p> : <p className="muted">Add the carrier's buying rate for this request.</p>}
-        <button className="primary" disabled={disabled} onClick={edit}>{details.rate ? 'Edit rate & price' : 'Add rate & price'}</button>
+        <Button variant="default" className="primary" disabled={disabled} onClick={edit}>{details.rate ? 'Edit rate & price' : 'Add rate & price'}</Button>
         {details.rate && <p className="small muted">{details.rate.availableSizes.length ? details.rate.availableSizes.map(size => {
           const key = ({ '20': 'sell20', '40': 'sell40', '40H': 'sell40H', '45': 'sell45' } as const)[size as '20' | '40' | '40H' | '45'];
           const value = key ? details.rate![key] : null;
           return <span key={size}>{size} selling price: {value == null ? 'Use pricing rules' : money(value, details.rate!.currency)}<br /></span>;
         }) : <>Selling price: {details.rate.sellBase == null ? 'Use pricing rules' : money(details.rate.sellBase, details.rate.currency)}</>}</p>}
-      </div>
+      </Card>
     </>}
     {disabled && <p className="banner warn">Save your status or notes changes before setting up the rate.</p>}
     {editing && <CostEditor id={details?.rate?.id ?? null} title={`Rate & price · ${request.reference}`} draft={editing} lookups={lookups} onCancel={() => setEditing(null)} onSubmitRate={async rate => { onSave(await api.saveRequestBuyingRate(request.id, request.revision, rate)); }} onSaved={() => setEditing(null)} />}

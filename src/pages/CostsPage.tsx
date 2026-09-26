@@ -1,3 +1,9 @@
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell, TableFooter } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useState } from 'react';
 import CarrierPreferences from '../components/CarrierPreferences';
 import RateUpload from '../components/RateUpload';
@@ -130,7 +136,7 @@ export default function CostsPage({ archiveOnly = false }: { archiveOnly?: boole
       {notice && <div className="banner info">{notice}</div>}
       {error && <div className="banner error">{error}</div>}
 
-      <div className="card">
+      <Card className="card">
         <div className="toolbar">
           {!archiveOnly && <Field label="Validity view"><select value={validity} onChange={e=>setValidity(e.target.value)}><option value="current">Current rates</option><option value="upcoming">Upcoming rates</option><option value="archive">Archive (expired)</option><option value="all">All rates</option></select></Field>}
           <Field label="Mode">
@@ -143,9 +149,9 @@ export default function CostsPage({ archiveOnly = false }: { archiveOnly?: boole
               ))}
             </select>
           </Field>
-          <Field label="Trade lane"><input value={tradelane} placeholder="e.g. TRANSPACIFIC" onChange={e=>setTradelane(e.target.value.toUpperCase())} /></Field>
+          <Field label="Trade lane"><Input value={tradelane} placeholder="e.g. TRANSPACIFIC" onChange={e=>setTradelane(e.target.value.toUpperCase())} /></Field>
           <Field label="Search">
-            <input
+            <Input
               value={search}
               placeholder="Rate code, port or carrier"
               onChange={(e) => setSearch(e.target.value)}
@@ -153,55 +159,55 @@ export default function CostsPage({ archiveOnly = false }: { archiveOnly?: boole
             />
           </Field>
           <Check label="Active only" checked={activeOnly} onChange={setActiveOnly} />
-          <button onClick={() => void load()} disabled={loading}>
+          <Button variant="outline" onClick={() => void load()} disabled={loading}>
             {loading ? <Spinner label="Loading…" /> : 'Apply'}
-          </button>
+          </Button>
           <div className="spacer" />
-          <button onClick={()=>setUpload(true)}>Upload freight rates</button>
-          <button disabled={loading} onClick={()=>setPreferences(true)}>Carrier preferences / upload</button>
-          <button className="primary" onClick={() => setEditing({ id: null, draft: structuredClone(EMPTY) })}>
+          <Button variant="outline" onClick={()=>setUpload(true)}>Upload freight rates</Button>
+          <Button variant="outline" disabled={loading} onClick={()=>setPreferences(true)}>Carrier preferences / upload</Button>
+          <Button variant="default" className="primary" onClick={() => setEditing({ id: null, draft: structuredClone(EMPTY) })}>
             New freight tariff
-          </button>
+          </Button>
         </div>
 
-        <div style={{overflowX: 'auto'}}><table>
-          <thead>
-            <tr>
-              <th>ID</th><th>Rate code</th>
-              <th>Charge codes</th>
-              <th>Mode</th>
-              <th>Lane</th>
-              <th>Carrier</th><th>Preferred</th><th>Priority</th><th>Quota</th>
-              <th>Cntr type</th>
-              <th>Rate type</th>
-              <th>Validity</th>
-              <th className="num">Cost by size</th>
-              <th>Status</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
+        <div style={{overflowX: 'auto'}}><Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>ID</TableHead><TableHead>Rate code</TableHead>
+              <TableHead>Charge codes</TableHead>
+              <TableHead>Mode</TableHead>
+              <TableHead>Lane</TableHead>
+              <TableHead>Carrier</TableHead><TableHead>Preferred</TableHead><TableHead>Priority</TableHead><TableHead>Quota</TableHead>
+              <TableHead>Cntr type</TableHead>
+              <TableHead>Rate type</TableHead>
+              <TableHead>Validity</TableHead>
+              <TableHead className="num">Cost by size</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {rows.map((r) => (
-              <tr key={r.id}><td>{r.id}</td>
-                <td>
-                  <strong>{r.rateCode}</strong> <span className="tag muted">{r.recordType}</span>
-                </td>
-                <td>{r.charges.map(c => c.code).join(", ")}</td><td>{MODE_LABELS[r.mode]}</td>
-                <td>
+              <TableRow key={r.id}><TableCell>{r.id}</TableCell>
+                <TableCell>
+                  <strong>{r.rateCode}</strong> <Badge variant="secondary" className="tag muted">{r.recordType}</Badge>
+                </TableCell>
+                <TableCell>{r.charges.map(c => c.code).join(", ")}</TableCell><TableCell>{MODE_LABELS[r.mode]}</TableCell>
+                <TableCell>
                   {r.portOfLoading} → {r.portOfDestination}
-                  {r.tradelaneCode && <span className="tag muted" style={{ marginLeft: 6 }}>{r.tradelaneCode}</span>}
-                </td>
-                <td>{r.carrier ?? '—'}</td><td>{r.preferred ? 'Yes' : 'No'}</td><td>{r.priority}</td><td>{r.quota ?? '—'}</td>
-                <td>
-                  <span className="tag">{r.containerType}</span>
-                </td>
-                <td>
+                  {r.tradelaneCode && <Badge variant="secondary" className="tag muted" style={{ marginLeft: 6 }}>{r.tradelaneCode}</Badge>}
+                </TableCell>
+                <TableCell>{r.carrier ?? '—'}</TableCell><TableCell>{r.preferred ? 'Yes' : 'No'}</TableCell><TableCell>{r.priority}</TableCell><TableCell>{r.quota ?? '—'}</TableCell>
+                <TableCell>
+                  <Badge variant="secondary" className="tag">{r.containerType}</Badge>
+                </TableCell>
+                <TableCell>
                   <span className={`tag ${r.rateType === 'NAC' ? '' : 'muted'}`}>{r.rateType}</span>
-                </td>
-                <td className="small muted">
+                </TableCell>
+                <TableCell className="small muted">
                   {r.validFrom} → {r.validTo}
-                </td>
-                <td className="num small">
+                </TableCell>
+                <TableCell className="num small">
                   {r.availableSizes.length > 0 ? (
                     r.availableSizes.map((s) => (
                       <div key={s}>
@@ -214,35 +220,35 @@ export default function CostsPage({ archiveOnly = false }: { archiveOnly?: boole
                       <div className="muted">{UNIT_LABELS[r.unit]}</div>
                     </div>
                   )}
-                </td>
-                <td>
+                </TableCell>
+                <TableCell>
                   <span className={`tag ${r.isActive ? 'good' : 'muted'}`}>
                     {r.validTo < today() ? 'Archived' : r.validFrom > today() ? 'Upcoming' : r.isActive ? 'Active' : 'Inactive'}
                   </span>
-                </td>
-                <td>
-                  <button className="link" onClick={() => startEdit(r)}>
+                </TableCell>
+                <TableCell>
+                  <Button variant="ghost" className="link" onClick={() => startEdit(r)}>
                     Edit
-                  </button>
-                  <button className="link danger" onClick={() => void remove(r)}>
+                  </Button>
+                  <Button variant="destructive" className="link danger" onClick={() => void remove(r)}>
                     Delete
-                  </button>
-                </td>
-              </tr>
+                  </Button>
+                </TableCell>
+              </TableRow>
             ))}
             {rows.length === 0 && !loading && (
-              <tr>
-                <td colSpan={15} className="muted">
+              <TableRow>
+                <TableCell colSpan={15} className="muted">
                   No cost rates match the current filters.
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             )}
-          </tbody>
-        </table></div>
+          </TableBody>
+        </Table></div>
         <p className="small muted" style={{ marginBottom: 0 }}>
           Showing {rows.length} of {total} rates.
         </p>
-      </div>
+      </Card>
 
       {upload && <RateUpload kinds={mode==='Air'?['Air','SeaFcl','SeaLcl']:mode==='SeaLcl'?['SeaLcl','SeaFcl','Air']:['SeaFcl','SeaLcl','Air']} onClose={()=>setUpload(false)} onSaved={message=>{setUpload(false);setNotice(message);void load();}} />}
       {preferences && <CarrierPreferences rates={rows} onClose={()=>setPreferences(false)} onSaved={()=>{setPreferences(false);void load();}} />}
@@ -340,10 +346,10 @@ export function CostEditor({
       footer={
         <>
           <span className="spacer" />
-          <button onClick={onCancel} disabled={saving}>Cancel</button>
-          <button className="primary" onClick={() => void save()} disabled={saving}>
+          <Button variant="outline" onClick={onCancel} disabled={saving}>Cancel</Button>
+          <Button variant="default" className="primary" onClick={() => void save()} disabled={saving}>
             {saving ? <Spinner label="Saving…" /> : onSubmitRate ? 'Save rate & mark ready' : 'Save rate'}
-          </button>
+          </Button>
         </>
       }
     >
@@ -356,7 +362,7 @@ export function CostEditor({
 
       <div className="grid">
         <Field label="Rate code">
-          <input value={form.rateCode} onChange={(e) => set('rateCode', e.target.value)} />
+          <Input value={form.rateCode} onChange={(e) => set('rateCode', e.target.value)} />
         </Field>
         <Field label="Mode">
           <select
@@ -375,30 +381,30 @@ export function CostEditor({
           </select>
         </Field>
         <Field label="Carrier">
-          <input value={form.carrier ?? ''} onChange={(e) => set('carrier', e.target.value || null)} />
+          <Input value={form.carrier ?? ''} onChange={(e) => set('carrier', e.target.value || null)} />
         </Field>
         <Field label="Agent">
-          <input value={form.agent ?? ''} onChange={(e) => set('agent', e.target.value || null)} />
+          <Input value={form.agent ?? ''} onChange={(e) => set('agent', e.target.value || null)} />
         </Field>
 
         <Field label="Origin country">
-          <input value={form.originCountry} onChange={(e) => set('originCountry', e.target.value)} />
+          <Input value={form.originCountry} onChange={(e) => set('originCountry', e.target.value)} />
         </Field>
         <Field label="Port of loading">
-          <input value={form.portOfLoading} onChange={(e) => set('portOfLoading', e.target.value)} />
+          <Input value={form.portOfLoading} onChange={(e) => set('portOfLoading', e.target.value)} />
         </Field>
         <Field label="Destination country">
-          <input value={form.destCountry} onChange={(e) => set('destCountry', e.target.value)} />
+          <Input value={form.destCountry} onChange={(e) => set('destCountry', e.target.value)} />
         </Field>
         <Field label="Port of destination">
-          <input
+          <Input
             value={form.portOfDestination}
             onChange={(e) => set('portOfDestination', e.target.value)}
           />
         </Field>
 
         <Field label="Trade lane" hint="e.g. TRANSPACIFIC, EUROPE, ISC">
-          <input
+          <Input
             value={form.tradelaneCode ?? ''}
             onChange={(e) => set('tradelaneCode', e.target.value || null)}
           />
@@ -415,14 +421,14 @@ export function CostEditor({
           </select>
         </Field>
         <Field label="Customer code" hint={form.recordType === 'RFQ' ? 'Required for RFQ rates' : 'Required for NAC rates'}>
-          <input
+          <Input
             required={form.recordType === 'RFQ' || form.rateType === 'NAC'}
             value={form.customerCode ?? ''}
             onChange={(e) => set('customerCode', e.target.value || null)}
           />
         </Field>
         <Field label="Salesforce opportunity ID" hint={form.recordType === 'RFQ' ? 'Required for RFQ rates' : 'Optional for general rates'}>
-          <input required={form.recordType === 'RFQ'} maxLength={80} value={form.salesforceOpportunityId ?? ''} onChange={e => set('salesforceOpportunityId', e.target.value || null)} placeholder="Salesforce opportunity ID" />
+          <Input required={form.recordType === 'RFQ'} maxLength={80} value={form.salesforceOpportunityId ?? ''} onChange={e => set('salesforceOpportunityId', e.target.value || null)} placeholder="Salesforce opportunity ID" />
         </Field>
         <Field label="Container type" hint="CNTR TYPE, e.g. DC, RF, OT, FR">
           <select
@@ -449,32 +455,32 @@ export function CostEditor({
           </select>
         </Field>
         <Field label="Currency">
-          <input
+          <Input
             value={form.currency}
             maxLength={3}
             onChange={(e) => set('currency', e.target.value.toUpperCase())}
           />
         </Field>
         <Field label="Valid from">
-          <input type="date" value={form.validFrom} onChange={(e) => set('validFrom', e.target.value)} />
+          <Input type="date" value={form.validFrom} onChange={(e) => set('validFrom', e.target.value)} />
         </Field>
         <Field label="Valid to">
-          <input type="date" value={form.validTo} onChange={(e) => set('validTo', e.target.value)} />
+          <Input type="date" value={form.validTo} onChange={(e) => set('validTo', e.target.value)} />
         </Field>
 
         <Check label="Preferred carrier" checked={form.preferred} onChange={(v) => set('preferred', v)} />
         <Field label="Quota (containers)" hint="Allocation for this rate’s validity period; blank = unspecified, 0 = unavailable">
-          <input type="number" min="0" step="1" value={form.quota ?? ''} onChange={(e) => set('quota', e.target.value === '' ? null : Number(e.target.value))} />
+          <Input type="number" min="0" step="1" value={form.quota ?? ''} onChange={(e) => set('quota', e.target.value === '' ? null : Number(e.target.value))} />
         </Field>
         <Field label="Transit time (days)">
-          <input
+          <Input
             type="number"
             value={form.transitTimeDays ?? ''}
             onChange={(e) => set('transitTimeDays', e.target.value ? Number(e.target.value) : null)}
           />
         </Field>
         <Field label="Priority" hint="1 is the first choice, then 2, 3…">
-          <input
+          <Input
             type="number"
             value={form.priority}
             onChange={(e) => set('priority', Number(e.target.value))}
@@ -484,7 +490,7 @@ export function CostEditor({
 
       <div className="field" style={{ marginTop: 12 }}>
         <label htmlFor="cost-remark">Remark</label>
-        <textarea
+        <Textarea
           id="cost-remark"
           rows={2}
           value={form.remark ?? ''}
@@ -498,7 +504,7 @@ export function CostEditor({
       <p className="small muted">Enter the final selling price per unit in {form.currency}, including any charges you want to sell. A saved price is used as-is; leave it blank to calculate the price using pricing rules. Quantity multiplies this price.</p>
       <div className="grid">
         {(usesSizes ? (['sell20', 'sell40', 'sell40H', 'sell45'] as const) : (['sellBase'] as const)).map((key, index) => <Field key={key} label={usesSizes ? `Sell / ${SIZE_LABELS[index]} container` : `Sell / ${UNIT_LABELS[form.unit]}`}>
-          <input type="number" min={0} max={9999999} step="0.01" value={form[key] ?? ''} placeholder="Use pricing rules" onChange={e => set(key, e.target.value === '' ? null : Number(e.target.value))} />
+          <Input type="number" min={0} max={9999999} step="0.01" value={form[key] ?? ''} placeholder="Use pricing rules" onChange={e => set(key, e.target.value === '' ? null : Number(e.target.value))} />
         </Field>)}
       </div>
 
@@ -508,46 +514,46 @@ export function CostEditor({
           ? 'Leave a size blank when the carrier does not offer it on this lane.'
           : 'Amounts are quoted per cbm / kg for this mode.'}
       </p>
-      <table>
-        <thead>
-          <tr>
-            <th>Charge code</th>
-            <th>Description</th>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Charge code</TableHead>
+            <TableHead>Description</TableHead>
             {usesSizes ? (
               SIZE_LABELS.map((s) => (
-                <th key={s} className="num">
+                <TableHead key={s} className="num">
                   {s}
-                </th>
+                </TableHead>
               ))
             ) : (
-              <th className="num">Amount</th>
+              <TableHead className="num">Amount</TableHead>
             )}
-            <th>Mand.</th>
-            <th>Markup</th>
-            <th />
-          </tr>
-        </thead>
-        <tbody>
+            <TableHead>Mand.</TableHead>
+            <TableHead>Markup</TableHead>
+            <TableHead />
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {form.charges.map((c, i) => (
-            <tr key={c.id ?? `new-${i}`}>
-              <td>
-                <input
+            <TableRow key={c.id ?? `new-${i}`}>
+              <TableCell>
+                <Input
                   value={c.code}
                   style={{ width: 80 }}
                   onChange={(e) => setCharge(i, { code: e.target.value.toUpperCase() })}
                 />
-              </td>
-              <td>
-                <input
+              </TableCell>
+              <TableCell>
+                <Input
                   value={c.name}
                   style={{ width: '100%', minWidth: 160 }}
                   onChange={(e) => setCharge(i, { name: e.target.value })}
                 />
-              </td>
+              </TableCell>
               {usesSizes ? (
                 SIZE_KEYS.map((key) => (
-                  <td key={key} className="num">
-                    <input
+                  <TableCell key={key} className="num">
+                    <Input
                       type="number"
                       step="0.01"
                       placeholder="—"
@@ -557,11 +563,11 @@ export function CostEditor({
                         setCharge(i, { [key]: e.target.value === '' ? null : Number(e.target.value) })
                       }
                     />
-                  </td>
+                  </TableCell>
                 ))
               ) : (
-                <td className="num">
-                  <input
+                <TableCell className="num">
+                  <Input
                     type="number"
                     step="0.01"
                     value={c.amountBase ?? ''}
@@ -570,54 +576,54 @@ export function CostEditor({
                       setCharge(i, { amountBase: e.target.value === '' ? null : Number(e.target.value) })
                     }
                   />
-                </td>
+                </TableCell>
               )}
-              <td>
+              <TableCell>
                 <input
                   type="checkbox"
                   checked={c.isMandatory}
                   onChange={(e) => setCharge(i, { isMandatory: e.target.checked })}
                 />
-              </td>
-              <td>
+              </TableCell>
+              <TableCell>
                 <input
                   type="checkbox"
                   checked={c.isMarkupable}
                   onChange={(e) => setCharge(i, { isMarkupable: e.target.checked })}
                 />
-              </td>
-              <td>
-                <button
+              </TableCell>
+              <TableCell>
+                <Button variant="destructive"
                   className="link danger"
                   onClick={() => setForm((f) => ({ ...f, charges: f.charges.filter((_, x) => x !== i) }))}
                 >
                   Remove
-                </button>
-              </td>
-            </tr>
+                </Button>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-        <tfoot>
-          <tr>
-            <th colSpan={2}>Total cost</th>
+        </TableBody>
+        <TableFooter>
+          <TableRow>
+            <TableHead colSpan={2}>Total cost</TableHead>
             {usesSizes ? (
               sizeTotals.map((t, i) => (
-                <th key={SIZE_KEYS[i]} className="num">
+                <TableHead key={SIZE_KEYS[i]} className="num">
                   {t === null ? '—' : money(t, form.currency)}
-                </th>
+                </TableHead>
               ))
             ) : (
-              <th className="num">{money(baseTotal, form.currency)}</th>
+              <TableHead className="num">{money(baseTotal, form.currency)}</TableHead>
             )}
-            <th colSpan={3} />
-          </tr>
-        </tfoot>
-      </table>
+            <TableHead colSpan={3} />
+          </TableRow>
+        </TableFooter>
+      </Table>
 
       <div className="row" style={{ marginTop: 10 }}>
-        <button onClick={() => setForm((f) => ({ ...f, charges: [...f.charges, { ...EMPTY_CHARGE }] }))}>
+        <Button variant="outline" onClick={() => setForm((f) => ({ ...f, charges: [...f.charges, { ...EMPTY_CHARGE }] }))}>
           Add charge line
-        </button>
+        </Button>
       </div>
     </Modal>
   );

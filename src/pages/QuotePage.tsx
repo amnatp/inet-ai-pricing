@@ -1,3 +1,9 @@
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableRow, TableCell } from "@/components/ui/table";
 import { useEffect, useState } from 'react';
 import { ApiError, api } from '../api/client';
 import type {
@@ -161,7 +167,7 @@ export default function QuotePage() {
             </select>
           </Field>
           <Field label="Trade lane">
-            <input
+            <Input
               value={form.tradelaneCode ?? ''}
               placeholder="Resolved automatically"
               onChange={(e) => set('tradelaneCode', e.target.value || null)}
@@ -211,7 +217,7 @@ export default function QuotePage() {
             </select>
           </Field>
           <Field label="Quantity" hint="Containers, cbm or kg">
-            <input
+            <Input
               type="number"
               min={0.001}
               step="0.001"
@@ -220,7 +226,7 @@ export default function QuotePage() {
             />
           </Field>
           <Field label="Shipment date">
-            <input
+            <Input
               type="date"
               value={form.shipmentDate ?? ''}
               onChange={(e) => set('shipmentDate', e.target.value || null)}
@@ -233,7 +239,7 @@ export default function QuotePage() {
             <div className="small" style={{ padding: '8px 0' }}>{user ? <><strong>{user.name}</strong><br />{user.email}</> : userError ? 'Account unavailable' : <Spinner label="Loading your account…" />}</div>
           </Field>
           <Field label="Request notes (optional)" hint="Target price, timing, or special requirements.">
-            <textarea rows={2} maxLength={2000} value={notes} onChange={(e) => setNotes(e.target.value)} />
+            <Textarea rows={2} maxLength={2000} value={notes} onChange={(e) => setNotes(e.target.value)} />
           </Field>
         </div>
 
@@ -244,10 +250,10 @@ export default function QuotePage() {
             onChange={(v) => set('includeOptionalCharges', v)}
           />
           <div className="spacer" />
-          <button type="button" disabled={loading} onClick={() => { setForm({ ...INITIAL, shipmentDate: today() }); setResult(null); setError(null); setNotes(''); }}>Reset</button>
-          <button className="primary" type="submit" disabled={loading || !user}>
+          <Button variant="outline" type="button" disabled={loading} onClick={() => { setForm({ ...INITIAL, shipmentDate: today() }); setResult(null); setError(null); setNotes(''); }}>Reset</Button>
+          <Button variant="default" className="primary" type="submit" disabled={loading || !user}>
             {loading ? <Spinner label="Searching…" /> : 'Search rates'}
-          </button>
+          </Button>
         </div>
       </form>
 
@@ -261,7 +267,7 @@ type Contact = { requesterEmail: string; notes: string; search: QuoteRequest };
 function QuoteResult({ result, contact, demo }: { result: QuoteResponse; contact: Contact; demo: boolean }) {
   return (
     <>
-      <div className="card">
+      <Card className="card">
         <div className="row">
           <div>
             <h2 style={{ marginBottom: 2 }}>Rate inquiry {result.reference}</h2>
@@ -278,13 +284,13 @@ function QuoteResult({ result, contact, demo }: { result: QuoteResponse; contact
             {m}
           </div>
         ))}
-      </div>
+      </Card>
 
-      {result.options.length === 0 && <div className="card">
+      {result.options.length === 0 && <Card className="card">
         <h2>No matching rates found</h2>
         <p className="small muted">Would you like to request a price from the pricing team for this shipment?</p>
         <RateRequestAction reference={result.reference} contact={contact} demo={demo} />
-      </div>}
+      </Card>}
 
       {result.options.map((o) => (
         <OptionCard key={`${o.costRateId}:${o.containerSize}`} option={o} best={o.recommended} reference={result.reference} contact={contact} demo={demo} />
@@ -299,12 +305,12 @@ function OptionCard({ option: o, best, reference, contact, demo }: { option: Quo
       <div className="option-head">
         <div>
           <h3 style={{ marginBottom: 4 }}>
-            {o.rateCode} {best && <span className="tag">Recommended</span>}{' '}
-            <span className="tag muted">{o.rateType}</span>{' '}
-            <span className="tag">
+            {o.rateCode} {best && <Badge variant="secondary" className="tag">Recommended</Badge>}{' '}
+            <Badge variant="secondary" className="tag muted">{o.rateType}</Badge>{' '}
+            <Badge variant="secondary" className="tag">
               {o.containerType}
               {o.containerSize ? ` · ${o.containerSize}` : ''}
-            </span>
+            </Badge>
           </h3>
           <div className="small muted">
             {o.carrier ?? 'Any carrier'} · priority {o.priority} · quota {o.quota ?? 'unspecified'} containers · {o.portOfLoading} → {o.portOfDestination} ·{' '}
@@ -333,57 +339,57 @@ function OptionCard({ option: o, best, reference, contact, demo }: { option: Quo
       <div className="split">
         <div>
           <h3>Cost breakdown</h3>
-          <table>
-            <tbody>
+          <Table>
+            <TableBody>
               {o.costBreakdown.map((c) => (
-                <tr key={c.code}>
-                  <td>
+                <TableRow key={c.code}>
+                  <TableCell>
                     {c.name}
-                    {!c.isMarkupable && <span className="tag muted" style={{ marginLeft: 6 }}>pass-through</span>}
-                  </td>
-                  <td className="num">{money(c.unitCost, o.currency)}</td>
-                </tr>
+                    {!c.isMarkupable && <Badge variant="secondary" className="tag muted" style={{ marginLeft: 6 }}>pass-through</Badge>}
+                  </TableCell>
+                  <TableCell className="num">{money(c.unitCost, o.currency)}</TableCell>
+                </TableRow>
               ))}
-              <tr>
-                <td>
+              <TableRow>
+                <TableCell>
                   <strong>Total cost</strong>
-                </td>
-                <td className="num">
+                </TableCell>
+                <TableCell className="num">
                   <strong>{money(o.unitCost, o.currency)}</strong>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
         </div>
 
         <div>
           <h3>{o.priceSource === 'Rate' ? 'Selling price' : 'Applied rules'}</h3>
-          <table>
-            <tbody>
+          <Table>
+            <TableBody>
               {o.appliedRules.map((r) => (
-                <tr key={r.ruleId}>
-                  <td style={{ whiteSpace: 'normal' }}>
+                <TableRow key={r.ruleId}>
+                  <TableCell style={{ whiteSpace: 'normal' }}>
                     <strong>{r.ruleName}</strong>
                     <div className="small muted">{r.explanation}</div>
-                  </td>
-                  <td className="num">{money(r.amountApplied, o.currency)}</td>
-                </tr>
+                  </TableCell>
+                  <TableCell className="num">{money(r.amountApplied, o.currency)}</TableCell>
+                </TableRow>
               ))}
               {o.appliedRules.length === 0 && (
-                <tr>
-                  <td className="muted">{o.priceSource === 'Rate' ? 'Saved selling price from rate record. Pricing rules are not applied.' : 'No rules matched.'}</td>
-                </tr>
+                <TableRow>
+                  <TableCell className="muted">{o.priceSource === 'Rate' ? 'Saved selling price from rate record. Pricing rules are not applied.' : 'No rules matched.'}</TableCell>
+                </TableRow>
               )}
-              <tr>
-                <td>
+              <TableRow>
+                <TableCell>
                   <strong>Unit sell</strong>
-                </td>
-                <td className="num">
+                </TableCell>
+                <TableCell className="num">
                   <strong>{money(o.unitSell, o.currency)}</strong>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
         </div>
       </div>
       <div style={{ marginTop: 16 }}>
@@ -430,10 +436,10 @@ function RateRequestAction({ reference, option, contact, demo }: {
       {sending && <p className="small muted" role="status">{demo ? 'Recording your demo request…' : 'Emailing your request to the pricing team…'}</p>}
       {error && !open && <div className="banner error" role="alert">{error}</div>}
     </div>
-    {!sent && !sending && canRetry && <button type="button" className={!option ? 'primary' : ''}
+    {!sent && !sending && canRetry && <Button variant={!option ? "default" : "outline"} type="button"
       onClick={() => setOpen(true)}>
       {option ? 'Request better rate' : 'Request a price'}
-    </button>}
+    </Button>}
     {open && <Modal title={option ? "Request better rate" : "Request a price"} onClose={() => { if (!sending) setOpen(false); }}>
       {option ? <>
         <p className="small muted">{option.carrier} · {option.portOfLoading} → {option.portOfDestination} · {option.containerType} {option.containerSize}</p>
@@ -454,20 +460,20 @@ function RateRequestAction({ reference, option, contact, demo }: {
         </fieldset>
         <div className="grid" style={{ marginBottom: 16 }}>
           <Field label="Estimated volume (containers)" hint="Total expected container volume for this opportunity.">
-            <input type="number" min={1} max={1000000} step={1} required={contact.search.mode === 'SeaFcl'} disabled={sending} value={estimatedContainers} onChange={e => setEstimatedContainers(e.target.value)} placeholder="e.g. 100" />
+            <Input type="number" min={1} max={1000000} step={1} required={contact.search.mode === 'SeaFcl'} disabled={sending} value={estimatedContainers} onChange={e => setEstimatedContainers(e.target.value)} placeholder="e.g. 100" />
           </Field>
           <Field label="Customer code" hint="Leave blank for an opportunity without a customer code.">
-            <input maxLength={40} disabled={sending} value={customerCode} onChange={e => setCustomerCode(e.target.value)} placeholder="e.g. C-1001" />
+            <Input maxLength={40} disabled={sending} value={customerCode} onChange={e => setCustomerCode(e.target.value)} placeholder="e.g. C-1001" />
           </Field>
         </div>
-        <Field label="Reply email" hint="Automatically provided by your user profile."><input type="email" readOnly value={contact.requesterEmail} /></Field>
+        <Field label="Reply email" hint="Automatically provided by your user profile."><Input type="email" readOnly value={contact.requesterEmail} /></Field>
         <div style={{ marginTop: 12 }}><Field label="Request notes (optional)">
-          <textarea rows={3} maxLength={2000} value={notes} disabled={sending} onChange={(e) => setNotes(e.target.value)} placeholder="Target price or special requirements" />
+          <Textarea rows={3} maxLength={2000} value={notes} disabled={sending} onChange={(e) => setNotes(e.target.value)} placeholder="Target price or special requirements" />
         </Field></div>
         {error && <div className="banner error" role="alert" style={{ marginTop: 12 }}>{error}</div>}
         <div className="row" style={{ marginTop: 16, justifyContent: 'flex-end' }}>
-          <button type="button" disabled={sending} onClick={() => setOpen(false)}>Cancel</button>
-          <button type="submit" className="primary" disabled={sending || !canRetry}>{sending ? <Spinner label="Submitting…" /> : 'Submit request'}</button>
+          <Button variant="outline" type="button" disabled={sending} onClick={() => setOpen(false)}>Cancel</Button>
+          <Button variant="default" type="submit" className="primary" disabled={sending || !canRetry}>{sending ? <Spinner label="Submitting…" /> : 'Submit request'}</Button>
         </div>
       </form>
     </Modal>}

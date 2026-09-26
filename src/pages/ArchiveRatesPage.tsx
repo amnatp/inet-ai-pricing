@@ -4,7 +4,7 @@ import ServiceRatesPage from './ServiceRatesPage';
 
 export default function ArchiveRatesPage() {
   return <>
-    <nav className="toolbar" aria-label="Archive rate categories">
+    <nav className="toolbar archive-nav" aria-label="Archive rate categories">
       <NavLink to="/archive-rates/freight">Freight archive</NavLink>
       <NavLink to="/archive-rates/customs">Customs archive</NavLink>
       <NavLink to="/archive-rates/transport">Transport archive</NavLink>
