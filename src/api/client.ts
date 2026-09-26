@@ -51,6 +51,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export interface CostQuery {
+  validity?: string;
   mode?: TransportMode | '';
   search?: string;
   tradelane?: string;
@@ -116,7 +117,7 @@ export const api = {
 };
 
 export const serviceApi = {
-  list: (category: string, type: string, search: string, page: number) => request<Paged<import('../pages/ServiceRatesPage').ServiceRate>>(`/service-rates/?${new URLSearchParams({ category, type, search, page: String(page) })}`),
+  list: (category: string, type: string, search: string, page: number, validity = "all") => request<Paged<import('../pages/ServiceRatesPage').ServiceRate>>(`/service-rates/?${new URLSearchParams({ category, type, search, page: String(page), validity })}`),
   save: (body: import('../pages/ServiceRatesPage').ServiceRate) => request(`/service-rates/${body.id || ''}`, { method: body.id ? 'PUT' : 'POST', body: JSON.stringify(body) }),
   remove: (id: number, revision: number) => request<void>(`/service-rates/${id}?revision=${revision}`, { method: 'DELETE' }),
 };

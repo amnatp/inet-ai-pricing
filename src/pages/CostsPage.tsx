@@ -3,7 +3,7 @@ import CarrierPreferences from '../components/CarrierPreferences';
 import RateUpload from '../components/RateUpload';
 import { ApiError, api } from '../api/client';
 import type { CostCharge, CostRate, CostRateInput, Lookups, TransportMode } from '../api/types';
-import { Check, Field, Modal } from '../components/ui';
+import { Check, Field, Modal, Spinner } from '../components/ui';
 import { MODE_LABELS, UNIT_LABELS, addMonths, money, today } from '../lib/format';
 
 const SIZE_KEYS = ['amount20', 'amount40', 'amount40H', 'amount45'] as const;
@@ -59,6 +59,7 @@ export const EMPTY: CostRateInput = {
 };
 
 export default function CostsPage() {
+  const [validity,setValidity]=useState('current');
   const [preferences,setPreferences]=useState(false);
   const [upload,setUpload]=useState(false);
   const [notice,setNotice]=useState('');
@@ -81,7 +82,7 @@ export default function CostsPage() {
     setLoading(true);
     setError(null);
     try {
-      const page = await api.listCosts({ mode, search, activeOnly, tradelane, pageSize: 200 });
+      const page = await api.listCosts({ mode, search, activeOnly, tradelane, validity, pageSize: 200 });
       setRows(page.items);
       setTotal(page.total);
     } catch (e) {
@@ -94,7 +95,7 @@ export default function CostsPage() {
   useEffect(() => {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, activeOnly]);
+  }, [mode, activeOnly, validity]);
 
   function startEdit(rate: CostRate) {
     const {
@@ -131,6 +132,7 @@ export default function CostsPage() {
 
       <div className="card">
         <div className="toolbar">
+          <Field label="Validity view"><select value={validity} onChange={e=>setValidity(e.target.value)}><option value="current">Current rates</option><option value="upcoming">Upcoming rates</option><option value="archive">Archive (expired)</option><option value="all">All rates</option></select></Field>
           <Field label="Mode">
             <select value={mode} onChange={(e) => setMode(e.target.value as TransportMode | '')}>
               <option value="">All modes</option>
@@ -152,7 +154,7 @@ export default function CostsPage() {
           </Field>
           <Check label="Active only" checked={activeOnly} onChange={setActiveOnly} />
           <button onClick={() => void load()} disabled={loading}>
-            {loading ? 'Loading…' : 'Apply'}
+            {loading ? <Spinner label="Loading…" /> : 'Apply'}
           </button>
           <div className="spacer" />
           <button onClick={()=>setUpload(true)}>Upload freight rates</button>
@@ -165,7 +167,7 @@ export default function CostsPage() {
         <div style={{overflowX: 'auto'}}><table>
           <thead>
             <tr>
-              <th>Rate code</th>
+              <th>ID</th><th>Rate code</th>
               <th>Charge codes</th>
               <th>Mode</th>
               <th>Lane</th>
@@ -180,7 +182,7 @@ export default function CostsPage() {
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.id}>
+              <tr key={r.id}><td>{r.id}</td>
                 <td>
                   <strong>{r.rateCode}</strong> <span className="tag muted">{r.recordType}</span>
                 </td>
@@ -215,7 +217,7 @@ export default function CostsPage() {
                 </td>
                 <td>
                   <span className={`tag ${r.isActive ? 'good' : 'muted'}`}>
-                    {r.isActive ? 'Active' : 'Inactive'}
+                    {r.validTo < today() ? 'Archived' : r.validFrom > today() ? 'Upcoming' : r.isActive ? 'Active' : 'Inactive'}
                   </span>
                 </td>
                 <td>
@@ -230,7 +232,7 @@ export default function CostsPage() {
             ))}
             {rows.length === 0 && !loading && (
               <tr>
-                <td colSpan={14} className="muted">
+                <td colSpan={15} className="muted">
                   No cost rates match the current filters.
                 </td>
               </tr>
@@ -340,7 +342,7 @@ export function CostEditor({
           <span className="spacer" />
           <button onClick={onCancel} disabled={saving}>Cancel</button>
           <button className="primary" onClick={() => void save()} disabled={saving}>
-            {saving ? 'Saving…' : onSubmitRate ? 'Save rate & mark ready' : 'Save rate'}
+            {saving ? <Spinner label="Saving…" /> : onSubmitRate ? 'Save rate & mark ready' : 'Save rate'}
           </button>
         </>
       }

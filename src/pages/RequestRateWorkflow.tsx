@@ -1,3 +1,4 @@
+import { Spinner } from '../components/ui';
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
 import type { CostRateInput, Lookups, PricingRequest, PricingRequestWork } from '../api/types';
@@ -37,7 +38,7 @@ export default function RequestRateWorkflow({ request, onSave, disabled }: { req
     <h2>Rate setup</h2>
     <p className="muted">Add buying costs and an optional selling price. Saving marks this request Ready.</p>
     {error && <div role="alert" className="banner error">{error}</div>}
-    {loading ? <p role="status">Loading rate setup…</p> : details && <>
+    {loading ? <p><Spinner label="Loading rate setup…" /></p> : details && <>
       <div className="card"><h3>Buying rate & selling price</h3>
         {details.rate ? <p><strong>{details.rate.rateCode}</strong><br />{details.rate.portOfLoading} → {details.rate.portOfDestination}<br />
           {details.rate.availableSizes.length ? details.rate.availableSizes.map(size => <span key={size}>{size}: {money(details.rate!.totalCostBySize[size], details.rate!.currency)} · </span>) : money(details.rate.totalCostBase || 0, details.rate.currency)}

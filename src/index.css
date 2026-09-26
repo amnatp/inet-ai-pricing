@@ -286,3 +286,9 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .opportunity-type legend { font-size: 14px; font-weight: 600; }
 .opportunity-type label { display: flex; gap: 8px; align-items: center; }
 @media (max-width: 1200px) { .topbar { height: auto; min-height: 58px; flex-wrap: wrap; padding-top: 10px; padding-bottom: 10px; } .topbar nav { flex-wrap: wrap; } }
+
+/* Shared API loading indicator; inherits button or page text colour. */
+.loading-status { display: inline-flex; align-items: center; gap: 0.5rem; vertical-align: middle; }
+.spinner { display: inline-block; width: 1em; height: 1em; flex-shrink: 0; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spinner-turn 0.8s linear infinite; }
+@keyframes spinner-turn { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }

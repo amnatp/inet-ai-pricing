@@ -68,3 +68,10 @@ export function Check({
     </label>
   );
 }
+
+export function Spinner({ label = 'Loading…' }: Readonly<{ label?: string }>) {
+  return <span className="loading-status" role="status" aria-live="polite">
+    <span className="spinner" aria-hidden="true" />
+    <span>{label}</span>
+  </span>;
+}

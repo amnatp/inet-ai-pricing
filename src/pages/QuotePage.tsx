@@ -8,7 +8,7 @@ import type {
   QuoteResponse,
   TransportMode,
 } from '../api/types';
-import { Check, Field, Modal } from '../components/ui';
+import { Check, Field, Modal, Spinner } from '../components/ui';
 import { MODE_LABELS, UNIT_LABELS, money, today } from '../lib/format';
 
 const INITIAL: QuoteRequest = {
@@ -230,7 +230,7 @@ export default function QuotePage() {
 
         <div className="inquiry-contact" style={{ marginTop: 14 }}>
           <Field label="Requester" hint={user?.isDemo ? 'Demo user profile. Login integration is pending.' : 'Email is taken automatically from your signed-in account.'}>
-            <div className="small" style={{ padding: '8px 0' }}>{user ? <><strong>{user.name}</strong><br />{user.email}</> : 'Loading your account…'}</div>
+            <div className="small" style={{ padding: '8px 0' }}>{user ? <><strong>{user.name}</strong><br />{user.email}</> : userError ? 'Account unavailable' : <Spinner label="Loading your account…" />}</div>
           </Field>
           <Field label="Request notes (optional)" hint="Target price, timing, or special requirements.">
             <textarea rows={2} maxLength={2000} value={notes} onChange={(e) => setNotes(e.target.value)} />
@@ -246,7 +246,7 @@ export default function QuotePage() {
           <div className="spacer" />
           <button type="button" disabled={loading} onClick={() => { setForm({ ...INITIAL, shipmentDate: today() }); setResult(null); setError(null); setNotes(''); }}>Reset</button>
           <button className="primary" type="submit" disabled={loading || !user}>
-            {loading ? 'Searching…' : 'Search rates'}
+            {loading ? <Spinner label="Searching…" /> : 'Search rates'}
           </button>
         </div>
       </form>
@@ -467,7 +467,7 @@ function RateRequestAction({ reference, option, contact, demo }: {
         {error && <div className="banner error" role="alert" style={{ marginTop: 12 }}>{error}</div>}
         <div className="row" style={{ marginTop: 16, justifyContent: 'flex-end' }}>
           <button type="button" disabled={sending} onClick={() => setOpen(false)}>Cancel</button>
-          <button type="submit" className="primary" disabled={sending || !canRetry}>{sending ? 'Submitting…' : 'Submit request'}</button>
+          <button type="submit" className="primary" disabled={sending || !canRetry}>{sending ? <Spinner label="Submitting…" /> : 'Submit request'}</button>
         </div>
       </form>
     </Modal>}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ApiError, api } from '../api/client';
 import type { CustomerTier, MarkupType, PricingRule, PricingRuleInput, TransportMode } from '../api/types';
-import { Check, Field, Modal } from '../components/ui';
+import { Check, Field, Modal, Spinner } from '../components/ui';
 import { MARKUP_LABELS, MODE_LABELS } from '../lib/format';
 
 const TIERS: CustomerTier[] = ['Bronze', 'Silver', 'Gold', 'Platinum'];
@@ -112,7 +112,7 @@ export default function RulesPage() {
       <div className="card">
         <div className="toolbar">
           <button onClick={() => void load()} disabled={loading}>
-            {loading ? 'Loading…' : 'Refresh'}
+            {loading ? <Spinner label="Loading…" /> : 'Refresh'}
           </button>
           <div className="spacer" />
           <button className="primary" onClick={() => setEditing({ id: null, draft: { ...EMPTY } })}>
@@ -247,7 +247,7 @@ function RuleEditor({
           <span className="spacer" />
           <button onClick={onCancel}>Cancel</button>
           <button className="primary" onClick={() => void save()} disabled={saving}>
-            {saving ? 'Saving…' : 'Save rule'}
+            {saving ? <Spinner label="Saving…" /> : 'Save rule'}
           </button>
         </>
       }

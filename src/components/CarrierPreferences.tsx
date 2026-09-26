@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { api } from '../api/client';
 import type { CostRate } from '../api/types';
-import { Modal } from './ui';
+import { Modal, Spinner } from './ui';
 
 export interface PreferenceRow {
   rateCode: string; carrier: string | null; tradelaneCode: string | null;
@@ -33,6 +33,6 @@ export default function CarrierPreferences({ rates, onClose, onSaved }: { rates:
         <td><input aria-label={`Priority ${r.rateCode}`} type="number" min={r.preferred?1:0} max={999} step={1} value={r.priority} onChange={e=>change(i,{priority:Number(e.target.value)})} style={{width:90}} /></td>
         <td><input aria-label={`Quota ${r.rateCode}`} type="number" min={0} max={1000000} step={1} value={r.quota??''} onChange={e=>change(i,{quota:e.target.value===''?null:Number(e.target.value)})} style={{width:110}} /></td></tr>)}
     </tbody></table></div>
-    <div className="toolbar" style={{marginTop:16}}><span>{rows.length} rates in this preview</span><div className="spacer"/><button disabled={busy} onClick={onClose}>Cancel</button><button className="primary" disabled={busy||!rows.length} onClick={()=>void save()}>{busy?'Working…':'Save preferences & quota'}</button></div>
+    <div className="toolbar" style={{marginTop:16}}><span>{rows.length} rates in this preview</span><div className="spacer"/><button disabled={busy} onClick={onClose}>Cancel</button><button className="primary" disabled={busy||!rows.length} onClick={()=>void save()}>{busy?<Spinner label="Working…" />:'Save preferences & quota'}</button></div>
   </Modal>;
 }
