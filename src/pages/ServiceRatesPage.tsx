@@ -8,20 +8,20 @@ export type ServiceRate = { id: number; revision: number; type: string; recordTy
 const label = (s: string) => s.replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase()).replace('Uom', 'unit').replace('Salesforce Opportunity Id', 'Salesforce opportunity ID');
 const names: Record<string, string> = { Customs: 'Customs', Trucking: 'Trucking', CrossBorder: 'X-border' };
 const msg = (e: unknown) => e instanceof Error ? e.message : 'Request failed.';
-export default function ServiceRatesPage({ category }: { category: 'customs' | 'transport' }) {
+export default function ServiceRatesPage({ category, archiveOnly = false }: { category: 'customs' | 'transport'; archiveOnly?: boolean }) {
  const [rows, setRows] = useState<ServiceRate[]>([]), [total, setTotal] = useState(0), [page, setPage] = useState(1);
  const [search, setSearch] = useState(''), [type, setType] = useState(''), [error, setError] = useState(''), [loading, setLoading] = useState(false);
- const [validity,setValidity]=useState('current');
+ const [validity,setValidity]=useState(archiveOnly ? 'archive' : 'current');
  const [upload,setUpload]=useState(false),[notice,setNotice]=useState('');
  const [editing, setEditing] = useState<ServiceRate | null>(null);
  async function load() { setLoading(true); setError(''); try { const data = await serviceApi.list(category, type, search, page, validity); setRows(data.items); setTotal(data.total); } catch(e) { setError(msg(e)); } finally { setLoading(false); } }
  useEffect(() => { void load(); }, [category, type, page, validity]);
  const money = (r: ServiceRate, side: string) => r[`${side}Amount`] == null ? 'Not set' : `${r[`${side}Currency`]} ${r[`${side}Amount`]} / ${r[`${side}Uom`]}`;
- return <><h1>{category === 'customs' ? 'Customs tariffs' : 'Transport tariffs'}</h1><p className="subtitle">{category === 'customs' ? 'Customs clearance and related service charges.' : 'Trucking and cross-border charges in one table, grouped by type.'} Each row is one charge; buying cost and selling price retain their own currency, minimum and unit.</p>
+ return <><h1>{archiveOnly ? (category === 'customs' ? 'Archived customs rates' : 'Archived transport rates') : category === 'customs' ? 'Customs tariffs' : 'Transport tariffs'}</h1><p className="subtitle">{category === 'customs' ? 'Customs clearance and related service charges.' : 'Trucking and cross-border charges in one table, grouped by type.'} Each row is one charge; buying cost and selling price retain their own currency, minimum and unit.</p>
  {notice && <div className="banner info">{notice}</div>}
  {error && <div role="alert" className="banner error">{error}</div>}
  <div className="card"><form className="toolbar" onSubmit={e => { e.preventDefault(); if (page !== 1) setPage(1); else void load(); }}>
- <Field label="Validity view"><select value={validity} onChange={e=>{setValidity(e.target.value);setPage(1);}}><option value="current">Current rates</option><option value="upcoming">Upcoming rates</option><option value="archive">Archive (expired)</option><option value="all">All rates</option></select></Field>
+ {!archiveOnly && <Field label="Validity view"><select value={validity} onChange={e=>{setValidity(e.target.value);setPage(1);}}><option value="current">Current rates</option><option value="upcoming">Upcoming rates</option><option value="archive">Archive (expired)</option><option value="all">All rates</option></select></Field>}
  <Field label="Search"><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Charge, vendor, customer or route" /></Field>
  {category === 'transport' && <Field label="Type"><select value={type} onChange={e => { setType(e.target.value); setPage(1); }}><option value="">All transport</option><option value="Trucking">Trucking</option><option value="CrossBorder">X-border</option></select></Field>}
  <button disabled={loading}>{loading ? <Spinner label="Loading…" /> : 'Search / refresh'}</button><span className="spacer" /><button type="button" onClick={()=>setUpload(true)}>Upload rates</button><button type="button" className="primary" onClick={() => setEditing({ id: 0, revision: 0, type: category === 'customs' ? 'Customs' : type || 'Trucking', recordType: 'General', rateType: 'FAK', chargeType: 'Mandatory', validFrom: today(), validTo: addMonths(today(), 3), isActive: true, owner: 'WICEBKK', costCurrency: 'THB', costUom: 'Trip' })}>Add charge rate</button></form>

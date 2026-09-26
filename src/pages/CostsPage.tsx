@@ -58,8 +58,8 @@ export const EMPTY: CostRateInput = {
   charges: [{ ...EMPTY_CHARGE, code: 'OFR', name: 'OCEAN FREIGHT' }],
 };
 
-export default function CostsPage() {
-  const [validity,setValidity]=useState('current');
+export default function CostsPage({ archiveOnly = false }: { archiveOnly?: boolean }) {
+  const [validity,setValidity]=useState(archiveOnly ? 'archive' : 'current');
   const [preferences,setPreferences]=useState(false);
   const [upload,setUpload]=useState(false);
   const [notice,setNotice]=useState('');
@@ -122,7 +122,7 @@ export default function CostsPage() {
 
   return (
     <>
-      <h1>Freight tariffs</h1>
+      <h1>{archiveOnly ? 'Archived freight rates' : 'Freight tariffs'}</h1>
       <p className="subtitle">
         Buying rates per lane and equipment. Sell prices are derived from these by the rules engine.
       </p>
@@ -132,7 +132,7 @@ export default function CostsPage() {
 
       <div className="card">
         <div className="toolbar">
-          <Field label="Validity view"><select value={validity} onChange={e=>setValidity(e.target.value)}><option value="current">Current rates</option><option value="upcoming">Upcoming rates</option><option value="archive">Archive (expired)</option><option value="all">All rates</option></select></Field>
+          {!archiveOnly && <Field label="Validity view"><select value={validity} onChange={e=>setValidity(e.target.value)}><option value="current">Current rates</option><option value="upcoming">Upcoming rates</option><option value="archive">Archive (expired)</option><option value="all">All rates</option></select></Field>}
           <Field label="Mode">
             <select value={mode} onChange={(e) => setMode(e.target.value as TransportMode | '')}>
               <option value="">All modes</option>
