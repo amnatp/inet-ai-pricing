@@ -196,7 +196,7 @@ th { color: var(--text-muted); font-size: 11px; text-transform: uppercase; lette
 tbody tr:hover { background: var(--surface-alt); }
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 
-.grid {
+.form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
   gap: 12px;
@@ -337,3 +337,18 @@ select { min-height: 36px; font-size: 14px; box-shadow: 0 1px 2px #0000000d; }
 
 [data-slot="table-cell"].num, [data-slot="table-head"].num { text-align: right; }
 [data-slot="button"].link { height: auto; padding: 4px 6px; }
+
+/* Rule editor: explicit columns avoid collisions with Tailwind's grid utility. */
+.rule-section + .rule-section { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border); }
+.rule-section h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+.rule-section > p { margin: 0 0 16px; line-height: 1.5; }
+.rule-details-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+.rule-fields-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.rule-section .field { min-width: 0; gap: 6px; }
+.rule-section input, .rule-section select, .rule-section textarea { width: 100%; }
+.rule-behavior { display: flex; flex-wrap: wrap; gap: 16px 24px; padding-top: 8px; }
+@media (max-width: 700px) { .rule-fields-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 480px) {
+ .rule-details-grid, .rule-fields-grid { grid-template-columns: minmax(0, 1fr); }
+ .rule-behavior { flex-direction: column; }
+}

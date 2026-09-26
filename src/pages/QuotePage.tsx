@@ -124,7 +124,7 @@ export default function QuotePage() {
       {userError && <div className="banner error" role="alert">{userError}</div>}
 
       <form className="card" onSubmit={(e) => { e.preventDefault(); if (!loading) void run(); }}>
-        <div className="grid">
+        <div className="form-grid">
           <Field label="Mode">
             <select value={form.mode} onChange={(e) => changeMode(e.target.value as TransportMode)}>
               {(Object.keys(MODE_LABELS) as TransportMode[]).map((m) => (
@@ -458,7 +458,7 @@ function RateRequestAction({ reference, option, contact, demo }: {
           <label><input type="radio" name="opportunityType" value="GeneralOpportunity" checked={opportunityType === 'GeneralOpportunity'} onChange={() => setOpportunityType('GeneralOpportunity')} /> General opportunity</label>
           <label><input type="radio" name="opportunityType" value="RFQ" checked={opportunityType === 'RFQ'} onChange={() => setOpportunityType('RFQ')} /> RFQ</label>
         </fieldset>
-        <div className="grid" style={{ marginBottom: 16 }}>
+        <div className="form-grid" style={{ marginBottom: 16 }}>
           <Field label="Estimated volume (containers)" hint="Total expected container volume for this opportunity.">
             <Input type="number" min={1} max={1000000} step={1} required={contact.search.mode === 'SeaFcl'} disabled={sending} value={estimatedContainers} onChange={e => setEstimatedContainers(e.target.value)} placeholder="e.g. 100" />
           </Field>

@@ -6,10 +6,10 @@ export function Modal({ title, children, footer, onClose }: Readonly<{
  title: string; children: ReactNode; footer?: ReactNode; onClose: () => void;
 }>) {
  return <Dialog open onOpenChange={open => { if (!open) onClose(); }}>
-  <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-[900px]" aria-describedby={undefined} onPointerDownOutside={e => e.preventDefault()}>
-   <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
-   <div className="min-w-0">{children}</div>
-   {footer && <DialogFooter>{footer}</DialogFooter>}
+  <DialogContent className="flex max-h-[90dvh] flex-col gap-0 overflow-hidden p-0 sm:max-w-[1000px]" aria-describedby={undefined} onPointerDownOutside={e => e.preventDefault()}>
+   <DialogHeader className="shrink-0 border-b px-6 py-5 pr-14"><DialogTitle>{title}</DialogTitle></DialogHeader>
+   <div className="min-h-0 min-w-0 overflow-y-auto px-6 py-5">{children}</div>
+   {footer && <DialogFooter className="shrink-0 border-t bg-background px-6 py-4">{footer}</DialogFooter>}
   </DialogContent>
  </Dialog>;
 }

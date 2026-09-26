@@ -360,7 +360,7 @@ export function CostEditor({
         </div>
       ))}
 
-      <div className="grid">
+      <div className="form-grid">
         <Field label="Rate code">
           <Input value={form.rateCode} onChange={(e) => set('rateCode', e.target.value)} />
         </Field>
@@ -502,7 +502,7 @@ export function CostEditor({
 
       <h3 style={{ marginTop: 18 }}>Selling price (optional)</h3>
       <p className="small muted">Enter the final selling price per unit in {form.currency}, including any charges you want to sell. A saved price is used as-is; leave it blank to calculate the price using pricing rules. Quantity multiplies this price.</p>
-      <div className="grid">
+      <div className="form-grid">
         {(usesSizes ? (['sell20', 'sell40', 'sell40H', 'sell45'] as const) : (['sellBase'] as const)).map((key, index) => <Field key={key} label={usesSizes ? `Sell / ${SIZE_LABELS[index]} container` : `Sell / ${UNIT_LABELS[form.unit]}`}>
           <Input type="number" min={0} max={9999999} step="0.01" value={form[key] ?? ''} placeholder="Use pricing rules" onChange={e => set(key, e.target.value === '' ? null : Number(e.target.value))} />
         </Field>)}

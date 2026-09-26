@@ -73,14 +73,14 @@ function RequestDetail({ request, onSave, onDirty }: { request: PricingRequest; 
   return <Card className="card request-detail"><div className="row"><h2>{request.reference}</h2><span className="spacer" /><Badge variant="secondary" className="tag muted">Email: {request.emailStatus}</Badge></div>
     <p className="muted">Requested {date(request.createdAtUtc)}</p>
     {request.emailStatus === 'Demo' && <div className="banner info">Demo request. No email was sent.</div>}
-    <div className="grid" style={{ marginBottom: 18 }}>
+    <div className="form-grid" style={{ marginBottom: 18 }}>
       <div><span className="muted">Request type</span><div>{request.opportunityType === 'RFQ' ? 'RFQ' : request.opportunityType ? 'General opportunity' : 'Not specified'}</div></div>
       <div><span className="muted">Estimated containers</span><div>{request.estimatedContainers ?? 'Not specified'}</div></div>
       <div><span className="muted">Customer code</span><div>{request.customerCode || 'Not specified'}</div></div>
     </div>
     <details open><summary>Shipment & request details</summary><pre className="request-body">{request.body}</pre></details>
     <RequestRateWorkflow request={request} onSave={onSave} disabled={dirty} />
-    <form onSubmit={save}><h2>Handle request</h2><div className="grid"><Field label="Status"><select value={draft.status} onChange={e => setDraft({ ...draft, status: e.target.value as RequestStatus })}>{Object.entries(labels).map(([key, label]) => <option key={key} value={key} disabled={(key === "BuyingRateSet" || key === "Ready") && key !== request.status}>{label}</option>)}</select></Field><Field label="Assigned to"><Input maxLength={200} value={draft.assignee} placeholder="Team member name" onChange={e => setDraft({ ...draft, assignee: e.target.value })} /></Field></div>
+    <form onSubmit={save}><h2>Handle request</h2><div className="form-grid"><Field label="Status"><select value={draft.status} onChange={e => setDraft({ ...draft, status: e.target.value as RequestStatus })}>{Object.entries(labels).map(([key, label]) => <option key={key} value={key} disabled={(key === "BuyingRateSet" || key === "Ready") && key !== request.status}>{label}</option>)}</select></Field><Field label="Assigned to"><Input maxLength={200} value={draft.assignee} placeholder="Team member name" onChange={e => setDraft({ ...draft, assignee: e.target.value })} /></Field></div>
       <Field label="Internal notes / rate response" hint="Saved for the pricing team. These notes are not emailed to the requester."><Textarea rows={6} maxLength={5000} placeholder="Carrier follow-up, proposed rate, validity, and next steps…" value={draft.notes} onChange={e => setDraft({ ...draft, notes: e.target.value })} /></Field>
       {error && <div className="banner error" role="alert">{error}</div>}
       <div className="row"><span className="muted" role="status">{dirty ? 'Unsaved changes' : saved || request.updatedAtUtc ? 'Changes saved' : ''}</span><div className="spacer" /><Button variant="default" className="primary" disabled={saving || !dirty}>{saving ? <Spinner label="Saving…" /> : 'Save changes'}</Button></div>

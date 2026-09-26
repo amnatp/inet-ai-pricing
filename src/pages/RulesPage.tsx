@@ -247,11 +247,11 @@ function RuleEditor({
   return (
     <Modal
       title={id === null ? 'New pricing rule' : `Edit rule`}
-      onClose={onCancel}
+      onClose={() => { if (!saving) onCancel(); }}
       footer={
         <>
           <span className="spacer" />
-          <Button variant="outline" onClick={onCancel}>Cancel</Button>
+          <Button variant="outline" onClick={onCancel} disabled={saving}>Cancel</Button>
           <Button variant="default" className="primary" onClick={() => void save()} disabled={saving}>
             {saving ? <Spinner label="Saving…" /> : 'Save rule'}
           </Button>
@@ -265,7 +265,10 @@ function RuleEditor({
         </div>
       ))}
 
-      <div className="grid">
+      <section className="rule-section">
+      <h3>Rule details</h3>
+      <p className="small muted">Name the rule and set when it applies. Lower priority numbers run first.</p>
+      <div className="rule-details-grid">
         <Field label="Rule name">
           <Input value={form.name} onChange={(e) => set('name', e.target.value)} />
         </Field>
@@ -302,11 +305,13 @@ function RuleEditor({
         />
       </div>
 
-      <h3 style={{ marginTop: 18 }}>Conditions</h3>
-      <p className="small muted" style={{ marginTop: -4 }}>
+      </section>
+      <section className="rule-section">
+      <h3>Conditions</h3>
+      <p className="small muted">
         Leave a condition blank to match anything.
       </p>
-      <div className="grid">
+      <div className="rule-fields-grid">
         <Field label="Mode">
           <select
             value={form.mode ?? ''}
@@ -345,8 +350,11 @@ function RuleEditor({
         <Field label="Commodity">{text('commodity')}</Field>
       </div>
 
-      <h3 style={{ marginTop: 18 }}>Markup</h3>
-      <div className="grid">
+      </section>
+      <section className="rule-section">
+      <h3>Markup</h3>
+      <p className="small muted">Choose how the selling price is calculated and set optional limits.</p>
+      <div className="rule-fields-grid">
         <Field label="Markup type">
           <select
             value={form.markupType}
@@ -392,7 +400,10 @@ function RuleEditor({
         </Field>
       </div>
 
-      <div className="row" style={{ marginTop: 12 }}>
+      </section>
+      <section className="rule-section">
+      <h3>Rule behavior</h3>
+      <div className="rule-behavior">
         <Check label="Active" checked={form.isActive} onChange={(v) => set('isActive', v)} />
         <Check
           label="Fallback (only when no other rule matched)"
@@ -405,6 +416,7 @@ function RuleEditor({
           onChange={(v) => set('stopProcessing', v)}
         />
       </div>
+      </section>
     </Modal>
   );
 }
