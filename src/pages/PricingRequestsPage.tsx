@@ -34,7 +34,7 @@ export default function PricingRequestsPage() {
   }
   useEffect(() => { void load(); }, []);
   const visible = requests.filter(r => (status === 'All' || (status === 'Open' ? !['Resolved', 'Closed'].includes(r.status) : r.status === status)) &&
-    `${r.reference} ${r.requesterEmail} ${r.subject} ${r.body} ${r.customerCode ?? ""} ${r.opportunityType ?? ""} ${r.assignee}`.toLowerCase().includes(search.toLowerCase()));
+    `${r.reference} ${r.requesterEmail} ${r.subject} ${r.body} ${r.accountId ?? ""} ${r.opportunityType ?? ""} ${r.assignee}`.toLowerCase().includes(search.toLowerCase()));
   const current = requests.find(r => r.id === selected);
   return <section className="requests-page">
     <div className="row request-heading"><div><h1>Pricing requests</h1><p className="subtitle">Review inquiries, coordinate rates, and track the next step.</p></div><div className="spacer" /><Button variant="outline" onClick={() => void load()} disabled={loading}>{loading ? <Spinner label="Loading…" /> : 'Refresh queue'}</Button></div>
@@ -76,7 +76,7 @@ function RequestDetail({ request, onSave, onDirty }: { request: PricingRequest; 
     <div className="form-grid" style={{ marginBottom: 18 }}>
       <div><span className="muted">Request type</span><div>{request.opportunityType === 'RFQ' ? 'RFQ' : request.opportunityType ? 'General opportunity' : 'Not specified'}</div></div>
       <div><span className="muted">Estimated containers</span><div>{request.estimatedContainers ?? 'Not specified'}</div></div>
-      <div><span className="muted">Customer code</span><div>{request.customerCode || 'Not specified'}</div></div>
+      <div><span className="muted">Account ID</span><div>{request.accountId || 'Not specified'}</div></div>
     </div>
     <details open><summary>Shipment & request details</summary><pre className="request-body">{request.body}</pre></details>
     <RequestRateWorkflow request={request} onSave={onSave} disabled={dirty} />

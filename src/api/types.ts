@@ -1,6 +1,6 @@
 export type TransportMode = 'SeaFcl' | 'SeaLcl' | 'Air';
-export type ChargeUnit = 'PerContainer' | 'PerCbm' | 'PerKg' | 'PerShipment' | 'PerBl';
-export type CustomerTier = 'Bronze' | 'Silver' | 'Gold' | 'Platinum';
+export type ChargeUnit = 'PerContainer' | 'PerCbm' | 'PerRt' | 'PerKg' | 'PerShipment' | 'PerBl' | 'PerSet';
+export type AccountTier = 'Bronze' | 'Silver' | 'Gold' | 'Platinum';
 export type MarkupType =
   | 'Percentage'
   | 'FixedPerUnit'
@@ -40,8 +40,16 @@ export interface CostRate {
   portOfDestination: string;
   tradelaneCode: string | null;
   rateType: string;
-  customerCode: string | null;
+  accountId: string | null;
   commodity: string | null;
+  direction: string | null;
+  chargeType: string | null;
+  cargoType: string | null;
+  accountType: string | null;
+  rateApplyBy: string | null;
+  oceanService: string | null;
+  tsPort: string | null;
+  inlandRouting: string | null;
   containerType: string;
   unit: ChargeUnit;
   currency: string;
@@ -85,8 +93,8 @@ export interface PricingRule {
   destCountry: string | null;
   portOfDestination: string | null;
   tradelaneCode: string | null;
-  customerTier: CustomerTier | null;
-  customerCode: string | null;
+  accountTier: AccountTier | null;
+  accountId: string | null;
   containerType: string | null;
   containerSize: string | null;
   carrier: string | null;
@@ -109,9 +117,9 @@ export interface QuoteRequest {
   destCountry?: string | null;
   portOfDestination?: string | null;
   tradelaneCode?: string | null;
-  customerCode?: string | null;
-  customerName?: string | null;
-  customerTier?: CustomerTier | null;
+  accountId?: string | null;
+  accountName?: string | null;
+  accountTier?: AccountTier | null;
   containerType?: string | null;
   containerSize?: string | null;
   commodity?: string | null;
@@ -170,16 +178,16 @@ export interface QuoteResponse {
   reference: string;
   generatedAtUtc: string;
   resolvedTradelaneCode: string | null;
-  resolvedCustomerCode: string | null;
-  resolvedCustomerName: string | null;
-  resolvedCustomerTier: CustomerTier | null;
+  resolvedAccountId: string | null;
+  resolvedAccountName: string | null;
+  resolvedAccountTier: AccountTier | null;
   options: QuoteOption[];
   messages: string[];
 }
 
 export interface RateInquiryEmailRequest {
   estimatedContainers?: number;
-  customerCode?: string;
+  accountId?: string;
   opportunityType?: 'GeneralOpportunity' | 'RFQ';
   quoteReference: string;
   costRateId?: number;
@@ -194,11 +202,11 @@ export interface RateInquiryEmailResponse {
   message: string;
 }
 
-export interface Customer {
+export interface Account {
   id: number;
-  code: string;
-  name: string;
-  tier: CustomerTier;
+  accountId: string;
+  accountName: string;
+  tier: AccountTier;
   country: string | null;
   salesOwner: string | null;
   isActive: boolean;
@@ -223,6 +231,7 @@ export interface ContainerSize {
 }
 
 export interface Lookups {
+  dropdownOptions: Record<string, { value: string; label: string }[]>;
   originCountries: string[];
   portsOfLoading: string[];
   destCountries: string[];
@@ -233,7 +242,7 @@ export interface Lookups {
   currencies: string[];
   modes: TransportMode[];
   markupTypes: MarkupType[];
-  tiers: CustomerTier[];
+  tiers: AccountTier[];
   chargeUnits: ChargeUnit[];
 }
 
@@ -254,7 +263,7 @@ export interface PricingRequestWork {
 }
 export interface PricingRequest extends PricingRequestWork {
   estimatedContainers: number | null;
-  customerCode: string | null;
+  accountId: string | null;
   opportunityType: 'GeneralOpportunity' | 'RFQ' | null;
   id: string;
   reference: string;

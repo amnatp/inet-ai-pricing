@@ -1,3 +1,4 @@
+import { PortName } from '../components/Ports';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Spinner } from '../components/ui';
@@ -30,7 +31,7 @@ export default function RequestRateWorkflow({ request, onSave, disabled }: { req
       destCountry: s?.destCountry || '', portOfDestination: s?.portOfDestination || '',
       carrier: s?.carrier || null, tradelaneCode: s?.tradelaneCode || null,
       recordType: request.opportunityType === 'RFQ' ? 'RFQ' : 'General',
-      customerCode: request.customerCode || s?.customerCode || null, rateType: (request.customerCode || s?.customerCode) ? 'NAC' : 'FAK',
+      accountId: request.accountId || s?.accountId || null, rateType: (request.accountId || s?.accountId) ? 'NAC' : 'FAK',
       containerType: s?.containerType || (s?.mode === 'Air' ? 'AIR' : s?.mode === 'SeaLcl' ? 'LCL' : 'DC'),
       unit: s?.mode === 'Air' ? 'PerKg' : s?.mode === 'SeaLcl' ? 'PerCbm' : 'PerContainer',
       validFrom: date, validTo: addMonths(date, 3), remark: `Pricing request ${request.reference}`,
@@ -42,7 +43,7 @@ export default function RequestRateWorkflow({ request, onSave, disabled }: { req
     {error && <div role="alert" className="banner error">{error}</div>}
     {loading ? <p><Spinner label="Loading rate setup…" /></p> : details && <>
       <Card className="card"><h3>Buying rate & selling price</h3>
-        {details.rate ? <p><strong>{details.rate.rateCode}</strong><br />{details.rate.portOfLoading} → {details.rate.portOfDestination}<br />
+        {details.rate ? <p><strong>{details.rate.rateCode}</strong><br /><PortName value={details.rate.portOfLoading}/> → <PortName value={details.rate.portOfDestination}/><br />
           {details.rate.availableSizes.length ? details.rate.availableSizes.map(size => <span key={size}>{size}: {money(details.rate!.totalCostBySize[size], details.rate!.currency)} · </span>) : money(details.rate.totalCostBase || 0, details.rate.currency)}
           <br /><span className="muted">Valid {details.rate.validFrom} to {details.rate.validTo}</span></p> : <p className="muted">Add the carrier's buying rate for this request.</p>}
         <Button variant="default" className="primary" disabled={disabled} onClick={edit}>{details.rate ? 'Edit rate & price' : 'Add rate & price'}</Button>

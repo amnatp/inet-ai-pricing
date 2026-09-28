@@ -202,7 +202,7 @@ Content-Type: application/json
 ```json
 {
   "recordType": "RFQ",
-  "customerCode": "C-1001",
+  "accountId": "C-1001",
   "salesforceOpportunityId": "006XXXXXXXXXXXXXXX",
   "mode": "SeaFcl",
   "destCountry": "SINGAPORE",
@@ -248,7 +248,7 @@ The archive has direct routes `/archive-rates/freight`, `/archive-rates/customs`
 | --- | --- |
 | Rate ID | System identifier used for uploads and editing within the selected rate type |
 | Freight RateCode | Unique business code; required for freight uploads; not a substitute for update ID |
-| General / RFQ | RFQ requires customer code and Salesforce opportunity ID; queries respect that scope |
+| General / RFQ | RFQ requires account ID and Salesforce opportunity ID; queries respect that scope |
 | FAK / NAC | NAC rates require customer ownership; separate classification from General/RFQ |
 | Buying versus selling | Stored independently; a blank selling price enables freight rule calculation |
 | Validity | Both boundary dates inclusive; expired when ValidTo is before today in UTC |

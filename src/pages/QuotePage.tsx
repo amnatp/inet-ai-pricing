@@ -1,3 +1,5 @@
+import { PortName } from '../components/Ports';
+import { useCountryName } from '../components/Countries';
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -7,7 +9,7 @@ import { Table, TableBody, TableRow, TableCell } from "@/components/ui/table";
 import { useEffect, useState } from 'react';
 import { ApiError, api } from '../api/client';
 import type {
-  Customer,
+  Account,
   Lookups,
   QuoteOption,
   QuoteRequest,
@@ -23,7 +25,7 @@ const INITIAL: QuoteRequest = {
   portOfLoading: null,
   destCountry: null,
   portOfDestination: null,
-  customerCode: null,
+  accountId: null,
   containerType: null,
   containerSize: null,
   quantity: 1,
@@ -33,9 +35,10 @@ const INITIAL: QuoteRequest = {
 };
 
 export default function QuotePage() {
+  const countryName = useCountryName();
   const [form, setForm] = useState<QuoteRequest>(INITIAL);
   const [lookups, setLookups] = useState<Lookups | null>(null);
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
   const [result, setResult] = useState<QuoteResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,9 +54,9 @@ export default function QuotePage() {
     void api.pricingEmailStatus().then((s) => { setEmailEnabled(s.enabled); setDemo(s.mode === 'demo'); }).catch(() => setEmailEnabled(null));
     void (async () => {
       try {
-        const [l, c] = await Promise.all([api.lookups(), api.customers()]);
+        const [l, c] = await Promise.all([api.lookups(), api.accounts()]);
         setLookups(l);
-        setCustomers(c);
+        setAccounts(c);
       } catch {
         // Reference data is optional; the form still works with free text.
       }
@@ -95,17 +98,6 @@ export default function QuotePage() {
     }
   }
 
-  const options = (list: string[] | undefined, anyLabel = 'Any') => (
-    <>
-      <option value="">{anyLabel}</option>
-      {(list ?? []).map((v) => (
-        <option key={v} value={v}>
-          {v}
-        </option>
-      ))}
-    </>
-  );
-
   return (
     <>
       <h1>Rate inquiry</h1>
@@ -139,7 +131,7 @@ export default function QuotePage() {
               value={form.originCountry ?? ''}
               onChange={(e) => set('originCountry', e.target.value || null)}
             >
-              {options(lookups?.originCountries)}
+              <option value="">Any</option>{lookups?.originCountries.map(c => <option key={c} value={c}>{countryName(c)}</option>)}
             </select>
           </Field>
           <Field label="Port of loading">
@@ -147,7 +139,7 @@ export default function QuotePage() {
               value={form.portOfLoading ?? ''}
               onChange={(e) => set('portOfLoading', e.target.value || null)}
             >
-              {options(lookups?.portsOfLoading)}
+              <option value="">Any</option>{lookups?.portsOfLoading.map(p=><option key={p} value={p}><PortName value={p}/></option>)}
             </select>
           </Field>
           <Field label="Destination country">
@@ -155,7 +147,7 @@ export default function QuotePage() {
               value={form.destCountry ?? ''}
               onChange={(e) => set('destCountry', e.target.value || null)}
             >
-              {options(lookups?.destCountries)}
+              <option value="">Any</option>{lookups?.destCountries.map(c => <option key={c} value={c}>{countryName(c)}</option>)}
             </select>
           </Field>
           <Field label="Port of destination">
@@ -163,7 +155,7 @@ export default function QuotePage() {
               value={form.portOfDestination ?? ''}
               onChange={(e) => set('portOfDestination', e.target.value || null)}
             >
-              {options(lookups?.portsOfDestination)}
+              <option value="">Any</option>{lookups?.portsOfDestination.map(p=><option key={p} value={p}><PortName value={p}/></option>)}
             </select>
           </Field>
           <Field label="Trade lane">
@@ -173,15 +165,15 @@ export default function QuotePage() {
               onChange={(e) => set('tradelaneCode', e.target.value || null)}
             />
           </Field>
-          <Field label="Customer">
+          <Field label="Account">
             <select
-              value={form.customerCode ?? ''}
-              onChange={(e) => set('customerCode', e.target.value || null)}
+              value={form.accountId ?? ''}
+              onChange={(e) => set('accountId', e.target.value || null)}
             >
-              <option value="">No customer (spot)</option>
-              {customers.map((c) => (
-                <option key={c.code} value={c.code}>
-                  {c.name} — {c.tier}
+              <option value="">No account (spot)</option>
+              {accounts.map((account) => (
+                <option key={account.accountId} value={account.accountId}>
+                  {account.accountName} — {account.tier}
                 </option>
               ))}
             </select>
@@ -274,8 +266,8 @@ function QuoteResult({ result, contact, demo }: { result: QuoteResponse; contact
             <span className="small muted">
               {result.options.length} option(s)
               {result.resolvedTradelaneCode && ` · lane ${result.resolvedTradelaneCode}`}
-              {result.resolvedCustomerName &&
-                ` · ${result.resolvedCustomerName} (${result.resolvedCustomerTier})`}
+              {result.resolvedAccountName &&
+                ` · ${result.resolvedAccountName} (${result.resolvedAccountTier})`}
             </span>
           </div>
         </div>
@@ -313,7 +305,7 @@ function OptionCard({ option: o, best, reference, contact, demo }: { option: Quo
             </Badge>
           </h3>
           <div className="small muted">
-            {o.carrier ?? 'Any carrier'} · priority {o.priority} · quota {o.quota ?? 'unspecified'} containers · {o.portOfLoading} → {o.portOfDestination} ·{' '}
+            {o.carrier ?? 'Any carrier'} · priority {o.priority} · quota {o.quota ?? 'unspecified'} containers · <PortName value={o.portOfLoading}/> → <PortName value={o.portOfDestination}/> ·{' '}
             {o.transitTimeDays ? `${o.transitTimeDays} days` : 'transit n/a'} · valid to {o.validTo}
           </div>
         </div>
@@ -402,10 +394,11 @@ function OptionCard({ option: o, best, reference, contact, demo }: { option: Quo
 function RateRequestAction({ reference, option, contact, demo }: {
   reference: string; option?: QuoteOption; contact: Contact; demo: boolean;
 }) {
+  const countryName = useCountryName();
   const [open, setOpen] = useState(false);
   const [notes, setNotes] = useState(contact.notes);
   const [estimatedContainers, setEstimatedContainers] = useState('');
-  const [customerCode, setCustomerCode] = useState(contact.search.customerCode ?? '');
+  const [accountId, setAccountId] = useState(contact.search.accountId ?? '');
   const [opportunityType, setOpportunityType] = useState<'GeneralOpportunity' | 'RFQ'>('GeneralOpportunity');
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
@@ -420,7 +413,7 @@ function RateRequestAction({ reference, option, contact, demo }: {
       const delivery = await api.requestRate({ quoteReference: reference, costRateId: option?.costRateId,
         containerSize: option?.containerSize, notes: notes.trim(),
         estimatedContainers: estimatedContainers ? Number(estimatedContainers) : undefined,
-        customerCode: customerCode.trim() || undefined, opportunityType });
+        accountId: accountId.trim() || undefined, opportunityType });
       setDeliveryMessage(delivery.message);
       setSent(true);
       setOpen(false);
@@ -442,11 +435,11 @@ function RateRequestAction({ reference, option, contact, demo }: {
     </Button>}
     {open && <Modal title={option ? "Request better rate" : "Request a price"} onClose={() => { if (!sending) setOpen(false); }}>
       {option ? <>
-        <p className="small muted">{option.carrier} · {option.portOfLoading} → {option.portOfDestination} · {option.containerType} {option.containerSize}</p>
+        <p className="small muted">{option.carrier} · <PortName value={option.portOfLoading}/> → <PortName value={option.portOfDestination}/> · {option.containerType} {option.containerSize}</p>
         <p className="small">Current total: {money(option.totalSell, option.currency)}.</p>
       </> : <div className="banner info">
         <strong>{MODE_LABELS[contact.search.mode]}</strong><br />
-        {contact.search.originCountry || 'Any origin'} / {contact.search.portOfLoading || 'Any port'} → {contact.search.destCountry || 'Any destination'} / {contact.search.portOfDestination || 'Any port'}<br />
+        {countryName(contact.search.originCountry) || 'Any origin'} / <PortName value={contact.search.portOfLoading || 'Any port'}/> → {countryName(contact.search.destCountry) || 'Any destination'} / <PortName value={contact.search.portOfDestination || 'Any port'}/><br />
         Quantity: {contact.search.quantity} · Shipment date: {contact.search.shipmentDate || 'Search date'}<br />
         Equipment: {contact.search.containerType || 'Any'} {contact.search.containerSize || ''}
       </div>}
@@ -462,8 +455,8 @@ function RateRequestAction({ reference, option, contact, demo }: {
           <Field label="Estimated volume (containers)" hint="Total expected container volume for this opportunity.">
             <Input type="number" min={1} max={1000000} step={1} required={contact.search.mode === 'SeaFcl'} disabled={sending} value={estimatedContainers} onChange={e => setEstimatedContainers(e.target.value)} placeholder="e.g. 100" />
           </Field>
-          <Field label="Customer code" hint="Leave blank for an opportunity without a customer code.">
-            <Input maxLength={40} disabled={sending} value={customerCode} onChange={e => setCustomerCode(e.target.value)} placeholder="e.g. C-1001" />
+          <Field label="Account ID" hint="Leave blank for an opportunity without an account ID.">
+            <Input maxLength={40} disabled={sending} value={accountId} onChange={e => setAccountId(e.target.value)} placeholder="e.g. C-1001" />
           </Field>
         </div>
         <Field label="Reply email" hint="Automatically provided by your user profile."><Input type="email" readOnly value={contact.requesterEmail} /></Field>

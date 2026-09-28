@@ -1,3 +1,5 @@
+import { PortInput, usePortNames } from '../components/Ports';
+import { CountryInput, useCountryName } from '../components/Countries';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -6,11 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useState } from 'react';
 import { ApiError, api } from '../api/client';
-import type { CustomerTier, MarkupType, PricingRule, PricingRuleInput, TransportMode } from '../api/types';
+import type { AccountTier, Lookups, MarkupType, PricingRule, PricingRuleInput, TransportMode } from '../api/types';
 import { Check, Field, Modal, Spinner } from '../components/ui';
 import { MARKUP_LABELS, MODE_LABELS } from '../lib/format';
+import { CONTAINER_TYPE_OPTIONS, CURRENCY_OPTIONS } from '../lib/rateOptions';
 
-const TIERS: CustomerTier[] = ['Bronze', 'Silver', 'Gold', 'Platinum'];
+const TIERS: AccountTier[] = ['Bronze', 'Silver', 'Gold', 'Platinum'];
 
 const EMPTY: PricingRuleInput = {
   name: '',
@@ -27,8 +30,8 @@ const EMPTY: PricingRuleInput = {
   destCountry: null,
   portOfDestination: null,
   tradelaneCode: null,
-  customerTier: null,
-  customerCode: null,
+  accountTier: null,
+  accountId: null,
   containerType: null,
   containerSize: null,
   carrier: null,
@@ -40,16 +43,16 @@ const EMPTY: PricingRuleInput = {
   maxMarkup: null,
 };
 
-function conditionSummary(r: PricingRule) {
+function conditionSummary(r: PricingRule, countryName: (value: unknown) => string, portName: (value: unknown) => string) {
   const parts: string[] = [];
   if (r.mode) parts.push(MODE_LABELS[r.mode]);
-  if (r.originCountry) parts.push(`origin ${r.originCountry}`);
-  if (r.portOfLoading) parts.push(`POL ${r.portOfLoading}`);
+  if (r.originCountry) parts.push(`origin ${countryName(r.originCountry)}`);
+  if (r.portOfLoading) parts.push(`POL ${portName(r.portOfLoading)}`);
   if (r.tradelaneCode) parts.push(`lane ${r.tradelaneCode}`);
-  if (r.destCountry) parts.push(`dest ${r.destCountry}`);
-  if (r.portOfDestination) parts.push(`POD ${r.portOfDestination}`);
-  if (r.customerTier) parts.push(`tier ${r.customerTier}`);
-  if (r.customerCode) parts.push(`customer ${r.customerCode}`);
+  if (r.destCountry) parts.push(`dest ${countryName(r.destCountry)}`);
+  if (r.portOfDestination) parts.push(`POD ${portName(r.portOfDestination)}`);
+  if (r.accountTier) parts.push(`tier ${r.accountTier}`);
+  if (r.accountId) parts.push(`account ${r.accountId}`);
   if (r.containerType) parts.push(`cntr type ${r.containerType}`);
   if (r.containerSize) parts.push(`size ${r.containerSize}`);
   if (r.carrier) parts.push(`carrier ${r.carrier}`);
@@ -73,10 +76,13 @@ function actionSummary(r: PricingRule) {
 }
 
 export default function RulesPage() {
+  const countryName = useCountryName();
   const [rules, setRules] = useState<PricingRule[]>([]);
+  const portName=usePortNames(rules.flatMap(r=>[r.portOfLoading,r.portOfDestination]));
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState<{ id: number | null; draft: PricingRuleInput } | null>(null);
+  const [lookups, setLookups] = useState<Lookups | null>(null);
 
   async function load() {
     setLoading(true);
@@ -92,6 +98,7 @@ export default function RulesPage() {
 
   useEffect(() => {
     void load();
+    void api.lookups().then(setLookups).catch(() => setLookups(null));
   }, []);
 
   async function remove(rule: PricingRule) {
@@ -109,7 +116,7 @@ export default function RulesPage() {
       <h1>Pricing rules</h1>
       <p className="subtitle">
         Rules are evaluated from the lowest priority number upwards and their markups stack. Ties are broken
-        by specificity, so a customer-specific rule beats a trade-lane rule. Fallback rules only fire when
+        by specificity, so an account-specific rule beats a trade-lane rule. Fallback rules only fire when
         nothing else matched, and minimum-sell floors are always applied last.
       </p>
 
@@ -146,7 +153,7 @@ export default function RulesPage() {
                   <strong>{r.name}</strong>
                   {r.description && <div className="small muted">{r.description}</div>}
                 </TableCell>
-                <TableCell style={{ whiteSpace: 'normal', maxWidth: 320 }}>{conditionSummary(r)}</TableCell>
+                <TableCell style={{ whiteSpace: 'normal', maxWidth: 320 }}>{conditionSummary(r, countryName, portName)}</TableCell>
                 <TableCell>{actionSummary(r)}</TableCell>
                 <TableCell className="num mono">{r.specificity}</TableCell>
                 <TableCell>
@@ -185,6 +192,7 @@ export default function RulesPage() {
         <RuleEditor
           id={editing.id}
           draft={editing.draft}
+          lookups={lookups}
           onCancel={() => setEditing(null)}
           onSaved={async () => {
             setEditing(null);
@@ -199,11 +207,13 @@ export default function RulesPage() {
 function RuleEditor({
   id,
   draft,
+  lookups,
   onCancel,
   onSaved,
 }: {
   id: number | null;
   draft: PricingRuleInput;
+  lookups: Lookups | null;
   onCancel: () => void;
   onSaved: () => void | Promise<void>;
 }) {
@@ -214,6 +224,8 @@ function RuleEditor({
 
   const set = <K extends keyof PricingRuleInput>(key: K, value: PricingRuleInput[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
+  const options = (category: string, fallback: readonly string[]) =>
+    lookups?.dropdownOptions?.[category] ?? fallback.map(value => ({ value, label: value }));
 
   const text = (key: keyof PricingRuleInput) => (
     <Input
@@ -325,15 +337,15 @@ function RuleEditor({
             ))}
           </select>
         </Field>
-        <Field label="Origin country">{text('originCountry')}</Field>
-        <Field label="Port of loading">{text('portOfLoading')}</Field>
+        <Field label="Origin country"><CountryInput value={form.originCountry ?? ''} onChange={value => set('originCountry', value || null)} /></Field>
+        <Field label="Port of loading"><PortInput value={form.portOfLoading ?? ''} country={form.originCountry} onChange={value=>set('portOfLoading',value||null)}/></Field>
         <Field label="Trade lane">{text('tradelaneCode')}</Field>
-        <Field label="Destination country">{text('destCountry')}</Field>
-        <Field label="Port of destination">{text('portOfDestination')}</Field>
-        <Field label="Customer tier">
+        <Field label="Destination country"><CountryInput value={form.destCountry ?? ''} onChange={value => set('destCountry', value || null)} /></Field>
+        <Field label="Port of destination"><PortInput value={form.portOfDestination ?? ''} country={form.destCountry} onChange={value=>set('portOfDestination',value||null)}/></Field>
+        <Field label="Account tier">
           <select
-            value={form.customerTier ?? ''}
-            onChange={(e) => set('customerTier', (e.target.value || null) as CustomerTier | null)}
+            value={form.accountTier ?? ''}
+            onChange={(e) => set('accountTier', (e.target.value || null) as AccountTier | null)}
           >
             <option value="">Any</option>
             {TIERS.map((t) => (
@@ -343,8 +355,13 @@ function RuleEditor({
             ))}
           </select>
         </Field>
-        <Field label="Customer code">{text('customerCode')}</Field>
-        <Field label="Container type" hint="DC, RF, OT, FR, TK, LCL, AIR">{text('containerType')}</Field>
+        <Field label="Account ID">{text('accountId')}</Field>
+        <Field label="Container type">
+          <select value={form.containerType ?? ''} onChange={(e) => set('containerType', e.target.value || null)}>
+            <option value="">Any</option>
+            {options('container_type', CONTAINER_TYPE_OPTIONS).map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+          </select>
+        </Field>
         <Field label="Container size" hint="20, 40, 40H or 45">{text('containerSize')}</Field>
         <Field label="Carrier">{text('carrier')}</Field>
         <Field label="Commodity">{text('commodity')}</Field>
@@ -376,11 +393,10 @@ function RuleEditor({
           />
         </Field>
         <Field label="Currency" hint="Blank uses the rate currency">
-          <Input
-            value={form.currency ?? ''}
-            maxLength={3}
-            onChange={(e) => set('currency', e.target.value.toUpperCase() || null)}
-          />
+          <select value={form.currency ?? ''} onChange={(e) => set('currency', e.target.value || null)}>
+            <option value="">Use rate currency</option>
+            {options('currency', CURRENCY_OPTIONS).map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+          </select>
         </Field>
         <Field label="Min markup" hint="Clamp, per unit">
           <Input

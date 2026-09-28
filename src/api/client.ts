@@ -3,7 +3,7 @@ import type {
   PricingRequestWork,
   CostRate,
   CostRateInput,
-  Customer,
+  Account,
   Lookups,
   Paged,
   PricingRule,
@@ -61,6 +61,12 @@ export interface CostQuery {
 }
 
 export const api = {
+  ports: (query: { codes?: string; search?: string; country?: string; mode?: string; field?: string }) => {
+    const params=new URLSearchParams();
+    for(const [key,value] of Object.entries(query)) if(value) params.set(key,value);
+    return request<import('../components/Ports').Port[]>(`/reference/ports?${params}`);
+  },
+  countries: () => request<{ code: string; name: string }[]>('/reference/countries'),
   savePreferences: (rows: import('../components/CarrierPreferences').PreferenceRow[]) => request('/costs/preferences/', { method: 'PUT', body: JSON.stringify(rows) }),
   async previewPreferences(file: File): Promise<import('../components/CarrierPreferences').PreferenceRow[]> {
     const body=new FormData();body.append('file',file);
@@ -111,7 +117,7 @@ export const api = {
   requestRate: (body: RateInquiryEmailRequest) =>
     request<RateInquiryEmailResponse>('/rate-inquiries/requests', { method: 'POST', body: JSON.stringify(body) }),
 
-  customers: () => request<Customer[]>('/reference/customers'),
+  accounts: () => request<Account[]>('/reference/accounts'),
   tradelanes: () => request<Tradelane[]>('/reference/tradelanes'),
   lookups: () => request<Lookups>('/reference/lookups'),
 };
@@ -129,11 +135,30 @@ export const rateImportApi = {
     if(!response.ok) throw new Error('Template download failed');
     const url=URL.createObjectURL(await response.blob());const link=document.createElement('a');link.href=url;link.download=`${kind}_Rates_${existing?'Existing':'Template'}.csv`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   },
-  async preview(kind: import('../components/RateUpload').UploadKind, file:File):Promise<import('../components/RateUpload').RateImportPreview> {
-    const body=new FormData();body.append('file',file);
+  async preview(kind: import('../components/RateUpload').UploadKind, file:File, portChoices: import('../components/RateUpload').PortReviewChoice[]=[]):Promise<import('../components/RateUpload').RateImportPreview> {
+    const body=new FormData();body.append('file',file);body.append('portChoices',JSON.stringify(portChoices));
     const response=await fetch(`${BASE}/rate-imports/${kind}/preview`,{method:'POST',body});
-    if(!response.ok){const error=await response.json();throw new Error(error.title??'Upload failed');}
+    if(!response.ok){const error=await response.json();throw Object.assign(new Error(error.title??'Upload failed'),{portIssues:error.portIssues});}
     return response.json();
   },
   commit:(token:string)=>request<{created:number;updated:number}>('/rate-imports/commit',{method:'POST',body:JSON.stringify({token})}),
+};
+
+
+export const stagedImportApi = {
+ list:(kind:string,page=1)=>request<import('../components/RateUpload').ImportHistory>(`/rate-imports/uploads/?kind=${encodeURIComponent(kind)}&page=${page}`),
+ detail:(id:string,page=1,status='')=>request<import('../components/RateUpload').StagedUpload>(`/rate-imports/uploads/${id}?page=${page}&status=${encodeURIComponent(status)}`),
+ async upload(kind:string,file:File):Promise<import('../components/RateUpload').StagedUpload> {
+  const body=new FormData();body.append('file',file);
+  const response=await fetch(`${BASE}/rate-imports/uploads/${kind}`,{method:'POST',body});
+  if(!response.ok){const error=await response.json();throw new Error(error.title??'Upload failed');}return response.json();
+ },
+ process:(id:string,commit:boolean)=>request<import('../components/RateUpload').StagedUpload>(`/rate-imports/uploads/${id}/${commit?'retry':'validate'}`,{method:'POST'}),
+ sharedAlias:(id:string,rowId:number,revision:number,field:string,code:string)=>request<import('../components/RateUpload').StagedUpload>(`/rate-imports/uploads/${id}/rows/${rowId}/shared-port-alias`,{method:'POST',body:JSON.stringify({revision,field,code})}),
+ edit:(id:string,rowId:number,revision:number,values:Record<string,string>,rememberPortFields:string[]=[])=>request<import('../components/RateUpload').StagedUpload>(`/rate-imports/uploads/${id}/rows/${rowId}`,{method:'PUT',body:JSON.stringify({revision,values,rememberPortFields})}),
+ headers:(id:string,revision:number,headers:string[])=>request<import('../components/RateUpload').StagedUpload>(`/rate-imports/uploads/${id}/headers`,{method:'PUT',body:JSON.stringify({revision,headers})}),
+ async original(id:string,name:string) {
+  const response=await fetch(`${BASE}/rate-imports/uploads/${id}/original`);if(!response.ok)throw new Error('Original file download failed.');
+  const url=URL.createObjectURL(await response.blob());const link=document.createElement('a');link.href=url;link.download=name;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ },
 };

@@ -1,3 +1,5 @@
+import { PortName, PortInput } from '../components/Ports';
+import { CountryInput } from '../components/Countries';
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,6 +13,7 @@ import { ApiError, api } from '../api/client';
 import type { CostCharge, CostRate, CostRateInput, Lookups, TransportMode } from '../api/types';
 import { Check, Field, Modal, Spinner } from '../components/ui';
 import { MODE_LABELS, UNIT_LABELS, addMonths, money, today } from '../lib/format';
+import { ACCOUNT_TYPE_OPTIONS, CARGO_TYPE_OPTIONS, CHARGE_TYPE_OPTIONS, CURRENCY_OPTIONS, DIRECTION_OPTIONS, INLAND_ROUTING_OPTIONS, OCEAN_SERVICE_OPTIONS, RATE_APPLY_BY_OPTIONS, RATE_TYPE_OPTIONS } from '../lib/rateOptions';
 
 const SIZE_KEYS = ['amount20', 'amount40', 'amount40H', 'amount45'] as const;
 const SIZE_LABELS = ["20'", "40'", "40'H", "45'"];
@@ -48,8 +51,16 @@ export const EMPTY: CostRateInput = {
   portOfDestination: '',
   tradelaneCode: null,
   rateType: 'FAK',
-  customerCode: null,
+  accountId: null,
   commodity: null,
+  direction: null,
+  chargeType: null,
+  cargoType: null,
+  accountType: null,
+  rateApplyBy: null,
+  oceanService: null,
+  tsPort: null,
+  inlandRouting: null,
   containerType: 'DC',
   unit: 'PerContainer',
   currency: 'USD',
@@ -88,7 +99,14 @@ export default function CostsPage({ archiveOnly = false }: { archiveOnly?: boole
     setLoading(true);
     setError(null);
     try {
-      const page = await api.listCosts({ mode, search, activeOnly, tradelane, validity, pageSize: 200 });
+        const page = await api.listCosts({
+          mode,
+          search,
+          activeOnly,
+          tradelane,
+          validity,
+          pageSize: validity === 'archive' ? 5000 : 200,
+        });
       setRows(page.items);
       setTotal(page.total);
     } catch (e) {
@@ -180,6 +198,10 @@ export default function CostsPage({ archiveOnly = false }: { archiveOnly?: boole
               <TableHead>Carrier</TableHead><TableHead>Preferred</TableHead><TableHead>Priority</TableHead><TableHead>Quota</TableHead>
               <TableHead>Cntr type</TableHead>
               <TableHead>Rate type</TableHead>
+              <TableHead>Ocean classification</TableHead>
+              <TableHead>Ocean service</TableHead>
+              <TableHead>T/S port</TableHead>
+              <TableHead>Inland routing</TableHead>
               <TableHead>Validity</TableHead>
               <TableHead className="num">Cost by size</TableHead>
               <TableHead>Status</TableHead>
@@ -194,7 +216,7 @@ export default function CostsPage({ archiveOnly = false }: { archiveOnly?: boole
                 </TableCell>
                 <TableCell>{r.charges.map(c => c.code).join(", ")}</TableCell><TableCell>{MODE_LABELS[r.mode]}</TableCell>
                 <TableCell>
-                  {r.portOfLoading} → {r.portOfDestination}
+                  <PortName value={r.portOfLoading} /> → <PortName value={r.portOfDestination} />
                   {r.tradelaneCode && <Badge variant="secondary" className="tag muted" style={{ marginLeft: 6 }}>{r.tradelaneCode}</Badge>}
                 </TableCell>
                 <TableCell>{r.carrier ?? '—'}</TableCell><TableCell>{r.preferred ? 'Yes' : 'No'}</TableCell><TableCell>{r.priority}</TableCell><TableCell>{r.quota ?? '—'}</TableCell>
@@ -204,6 +226,12 @@ export default function CostsPage({ archiveOnly = false }: { archiveOnly?: boole
                 <TableCell>
                   <span className={`tag ${r.rateType === 'NAC' ? '' : 'muted'}`}>{r.rateType}</span>
                 </TableCell>
+                <TableCell className="small">
+                  {r.mode === 'Air' ? '—' : <>{r.direction ?? '—'} · {r.chargeType ?? '—'}<div className="muted">{r.cargoType ?? '—'} · {r.accountType ?? '—'} · {r.rateApplyBy ?? '—'}</div></>}
+                </TableCell>
+                <TableCell>{r.mode === 'Air' ? '—' : r.oceanService ?? '—'}</TableCell>
+                <TableCell>{r.mode === 'Air' || r.oceanService === 'Direct' ? '—' : <PortName value={r.tsPort ?? '—'} />}</TableCell>
+                <TableCell>{r.mode === 'Air' ? '—' : r.inlandRouting ?? '—'}</TableCell>
                 <TableCell className="small muted">
                   {r.validFrom} → {r.validTo}
                 </TableCell>
@@ -238,7 +266,7 @@ export default function CostsPage({ archiveOnly = false }: { archiveOnly?: boole
             ))}
             {rows.length === 0 && !loading && (
               <TableRow>
-                <TableCell colSpan={15} className="muted">
+                <TableCell colSpan={19} className="muted">
                   No cost rates match the current filters.
                 </TableCell>
               </TableRow>
@@ -292,6 +320,8 @@ export function CostEditor({
 
   const set = <K extends keyof CostRateInput>(key: K, value: CostRateInput[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
+  const dropdown = (category: string, fallback: readonly string[]) =>
+    lookups?.dropdownOptions?.[category] ?? fallback.map(value => ({ value, label: value }));
 
   const setCharge = (index: number, patch: Partial<CostCharge>) =>
     setForm((f) => ({
@@ -311,8 +341,8 @@ export function CostEditor({
   const baseTotal = form.charges.reduce<number>((sum, c) => sum + (Number(c.amountBase) || 0), 0);
 
   async function save() {
-    if (form.recordType === 'RFQ' && !form.customerCode?.trim()) {
-      setError('RFQ rates require a customer code.');
+    if (form.recordType === 'RFQ' && !form.accountId?.trim()) {
+      setError('RFQ rates require an account ID.');
       return;
     }
     if (form.recordType === 'RFQ' && !form.salesforceOpportunityId?.trim()) {
@@ -388,19 +418,18 @@ export function CostEditor({
         </Field>
 
         <Field label="Origin country">
-          <Input value={form.originCountry} onChange={(e) => set('originCountry', e.target.value)} />
+          <CountryInput value={form.originCountry} onChange={value => set('originCountry', value)} required />
         </Field>
+        <Field label="Port of receipt"><PortInput field="PortOfReceipt" mode={form.mode} value={form.portOfReceipt ?? ''} country={form.originCountry} onChange={value => set('portOfReceipt', value || null)} /></Field>
         <Field label="Port of loading">
-          <Input value={form.portOfLoading} onChange={(e) => set('portOfLoading', e.target.value)} />
+          <PortInput mode={form.mode} value={form.portOfLoading} country={form.originCountry} onChange={value => set('portOfLoading', value)} required />
         </Field>
         <Field label="Destination country">
-          <Input value={form.destCountry} onChange={(e) => set('destCountry', e.target.value)} />
+          <CountryInput value={form.destCountry} onChange={value => set('destCountry', value)} required />
         </Field>
+        <Field label="Port of discharge"><PortInput mode={form.mode} value={form.portOfDischarge ?? ''} country={form.destCountry} onChange={value => set('portOfDischarge', value || null)} /></Field>
         <Field label="Port of destination">
-          <Input
-            value={form.portOfDestination}
-            onChange={(e) => set('portOfDestination', e.target.value)}
-          />
+          <PortInput mode={form.mode} value={form.portOfDestination} country={form.destCountry} onChange={value => set('portOfDestination', value)} required />
         </Field>
 
         <Field label="Trade lane" hint="e.g. TRANSPACIFIC, EUROPE, ISC">
@@ -416,15 +445,24 @@ export function CostEditor({
         </Field>
         <Field label="Rate type">
           <select value={form.rateType} onChange={(e) => set('rateType', e.target.value)}>
-            <option value="FAK">FAK</option>
-            <option value="NAC">NAC</option>
+            {dropdown('rate_type', RATE_TYPE_OPTIONS).map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
         </Field>
-        <Field label="Customer code" hint={form.recordType === 'RFQ' ? 'Required for RFQ rates' : 'Required for NAC rates'}>
+        {form.mode !== 'Air' && <>
+          <Field label="Export / import"><select value={form.direction ?? ''} onChange={e => set('direction', e.target.value || null)}><option value="">Not set</option>{dropdown('direction', DIRECTION_OPTIONS).map(o => <option key={o.value} value={o.value}>{o.label}</option>)}</select></Field>
+          <Field label="Charge type"><select value={form.chargeType ?? ''} onChange={e => set('chargeType', e.target.value || null)}><option value="">Not set</option>{dropdown('charge_type', CHARGE_TYPE_OPTIONS).map(o => <option key={o.value} value={o.value}>{o.label}</option>)}</select></Field>
+          <Field label="Cargo type"><select value={form.cargoType ?? ''} onChange={e => set('cargoType', e.target.value || null)}><option value="">Not set</option>{dropdown('cargo_type', CARGO_TYPE_OPTIONS).map(o => <option key={o.value} value={o.value}>{o.label}</option>)}</select></Field>
+          <Field label="Account type"><select value={form.accountType ?? ''} onChange={e => set('accountType', e.target.value || null)}><option value="">Not set</option>{dropdown('account_type', ACCOUNT_TYPE_OPTIONS).map(o => <option key={o.value} value={o.value}>{o.label}</option>)}</select></Field>
+          <Field label="Rate apply by"><select value={form.rateApplyBy ?? ''} onChange={e => set('rateApplyBy', e.target.value || null)}><option value="">Not set</option>{dropdown('rate_apply_by', RATE_APPLY_BY_OPTIONS).map(o => <option key={o.value} value={o.value}>{o.label}</option>)}</select></Field>
+          <Field label="Ocean service"><select value={form.oceanService ?? ''} onChange={e => setForm(f => ({ ...f, oceanService: e.target.value || null, tsPort: e.target.value === 'Direct' ? null : f.tsPort }))}><option value="">Not set</option>{dropdown('ocean_service', OCEAN_SERVICE_OPTIONS).map(o => <option key={o.value} value={o.value}>{o.label}</option>)}</select></Field>
+          <Field label="T/S port"><PortInput mode={form.mode} value={form.tsPort ?? ''} disabled={form.oceanService === 'Direct'} onChange={value => set('tsPort', value || null)} /></Field>
+          <Field label="Inland routing"><select value={form.inlandRouting ?? ''} onChange={e => set('inlandRouting', e.target.value || null)}><option value="">Not set</option>{dropdown('inland_routing', INLAND_ROUTING_OPTIONS).map(o => <option key={o.value} value={o.value}>{o.label}</option>)}</select></Field>
+        </>}
+        <Field label="Account ID" hint={form.recordType === 'RFQ' ? 'Required for RFQ rates' : 'Required for NAC rates'}>
           <Input
             required={form.recordType === 'RFQ' || form.rateType === 'NAC'}
-            value={form.customerCode ?? ''}
-            onChange={(e) => set('customerCode', e.target.value || null)}
+            value={form.accountId ?? ''}
+            onChange={(e) => set('accountId', e.target.value || null)}
           />
         </Field>
         <Field label="Salesforce opportunity ID" hint={form.recordType === 'RFQ' ? 'Required for RFQ rates' : 'Optional for general rates'}>
@@ -447,19 +485,15 @@ export function CostEditor({
 
         <Field label="Charge unit">
           <select value={form.unit} onChange={(e) => set('unit', e.target.value as CostRateInput['unit'])}>
-            {(Object.keys(UNIT_LABELS) as (keyof typeof UNIT_LABELS)[]).map((u) => (
-              <option key={u} value={u}>
-                {UNIT_LABELS[u]}
-              </option>
+            {dropdown('freight_uom', Object.keys(UNIT_LABELS)).map(option => (
+              <option key={option.value} value={option.value}>{option.label}</option>
             ))}
           </select>
         </Field>
         <Field label="Currency">
-          <Input
-            value={form.currency}
-            maxLength={3}
-            onChange={(e) => set('currency', e.target.value.toUpperCase())}
-          />
+          <select value={form.currency} onChange={(e) => set('currency', e.target.value)}>
+            {dropdown('currency', CURRENCY_OPTIONS).map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+          </select>
         </Field>
         <Field label="Valid from">
           <Input type="date" value={form.validFrom} onChange={(e) => set('validFrom', e.target.value)} />

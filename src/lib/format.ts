@@ -9,9 +9,11 @@ export const MODE_LABELS: Record<TransportMode, string> = {
 export const UNIT_LABELS: Record<ChargeUnit, string> = {
   PerContainer: 'per container',
   PerCbm: 'per cbm',
+  PerRt: 'per RT',
   PerKg: 'per kg',
   PerShipment: 'per shipment',
   PerBl: 'per B/L',
+  PerSet: 'per set',
 };
 
 export const MARKUP_LABELS: Record<MarkupType, string> = {
