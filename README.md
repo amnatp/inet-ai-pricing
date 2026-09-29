@@ -305,13 +305,18 @@ npm run preview
 
 The development server uses port 5173. The production output is `dist/`.
 
-Set `VITE_API_BASE` to the backend URL ending in `/api`. This value is embedded at build time. For a local backend, create `.env.local`:
+Development uses `/api` from `.env`; the Vite proxy forwards requests to
+`http://localhost:5039`. Run the backend separately.
 
-```dotenv
-VITE_API_BASE=/api
-```
+Production builds use `.env.production`, which sets `VITE_API_BASE` to
+`https://inet-pricing-ewdbaxeyevdzd4dv.southeastasia-01.azurewebsites.net/api`.
+`npm run build` and the Azure Static Web Apps workflow use this production setting.
+Rebuild and redeploy `dist/` after changing the API target; it is embedded at build time.
 
-The Vite development proxy forwards `/api` to `http://localhost:5039`. The backend must be run separately. Restart Vite after environment changes and rebuild for a new production API target.
+For development overrides, use `.env.development.local`. For a different production
+API, use `.env.production.local` or set `VITE_API_BASE` in the build environment.
+Build environment variables take precedence over env files. The API's `AllowedOrigins`
+configuration must include the deployed frontend's exact HTTPS origin.
 
 ### Repository structure
 
