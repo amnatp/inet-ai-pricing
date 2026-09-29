@@ -219,7 +219,7 @@ export default function CostsPage({ archiveOnly = false }: { archiveOnly?: boole
                   <PortName value={r.portOfLoading} /> → <PortName value={r.portOfDestination} />
                   {r.tradelaneCode && <Badge variant="secondary" className="tag muted" style={{ marginLeft: 6 }}>{r.tradelaneCode}</Badge>}
                 </TableCell>
-                <TableCell>{r.carrier ?? '—'}</TableCell><TableCell>{r.preferred ? 'Yes' : 'No'}</TableCell><TableCell>{r.priority}</TableCell><TableCell>{r.quota ?? '—'}</TableCell>
+                <TableCell>{r.carrier ?? '—'}{r.carrierCode && <div className="text-xs text-muted-foreground">{r.mode === 'Air' ? 'IATA' : 'SCAC'}: {r.carrierCode}</div>}</TableCell><TableCell>{r.preferred ? 'Yes' : 'No'}</TableCell><TableCell>{r.priority}</TableCell><TableCell>{r.quota ?? '—'}</TableCell>
                 <TableCell>
                   <Badge variant="secondary" className="tag">{r.containerType}</Badge>
                 </TableCell>

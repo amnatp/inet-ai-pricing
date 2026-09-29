@@ -32,6 +32,7 @@ export interface CostRate {
   priceOwner: string;
   agent: string | null;
   carrier: string | null;
+  carrierCode?: string | null;
   originCountry: string;
   portOfReceipt: string | null;
   portOfLoading: string;

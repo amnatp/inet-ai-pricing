@@ -162,3 +162,14 @@ export const stagedImportApi = {
   const url=URL.createObjectURL(await response.blob());const link=document.createElement('a');link.href=url;link.download=name;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
  },
 };
+
+export interface ChargeMapping {
+  id: number; importTemplate: string; rateType: string; carrierCode: string | null;
+  sourceChargeName: string; itemCode: string; itemName: string; isActive: boolean;
+  revision: number; updatedAtUtc?: string; updatedBy?: string;
+}
+export const chargeMappings = {
+  list: () => request<ChargeMapping[]>('/charge-item-mappings/'),
+  save: (row: ChargeMapping) => request<ChargeMapping>(`/charge-item-mappings/${row.id || ''}`, { method: row.id ? 'PUT' : 'POST', body: JSON.stringify(row) }),
+  history: (id: number) => request<{id:number;changedAtUtc:string;changedBy:string;beforeJson:string|null;afterJson:string}[]>(`/charge-item-mappings/${id}/history`),
+};
