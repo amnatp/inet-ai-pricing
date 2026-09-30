@@ -146,6 +146,10 @@ export const rateImportApi = {
 
 
 export const stagedImportApi = {
+ async errors(id:string) {
+  const response=await fetch(`${BASE}/rate-imports/uploads/${id}/errors`);if(!response.ok)throw new Error('Error report download failed.');
+  const url=URL.createObjectURL(await response.blob());const link=document.createElement('a');link.href=url;link.download=`import-errors-${id}.csv`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ },
  list:(kind:string,page=1)=>request<import('../components/RateUpload').ImportHistory>(`/rate-imports/uploads/?kind=${encodeURIComponent(kind)}&page=${page}`),
  detail:(id:string,page=1,status='')=>request<import('../components/RateUpload').StagedUpload>(`/rate-imports/uploads/${id}?page=${page}&status=${encodeURIComponent(status)}`),
  async upload(kind:string,file:File):Promise<import('../components/RateUpload').StagedUpload> {

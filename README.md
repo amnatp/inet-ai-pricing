@@ -42,7 +42,7 @@ The intended outcomes are fewer duplicate rate entries, clearer validity, consis
 
 These are business roles. Separate internal role permissions and approval chains are not implemented.
 
-**Current scope:** Sea FCL, Sea LCL, Air, Customs, Trucking and Cross-border tariffs; CSV/XLSX upload; manual entry; freight pricing rules; optional stored selling prices; rate inquiry; pricing requests; archive browsing; and a server-to-server selling-rate query API.
+**Current scope:** Sea FCL, Sea LCL, Air, Customs, Trucking, Cross-border, Sea local and Air local tariffs; CSV/XLSX upload; manual entry; freight pricing rules; optional stored selling prices; rate inquiry; pricing requests; archive browsing; and a server-to-server selling-rate query API.
 
 **Target extensions:** web/email RPA, AI email ingestion, a persisted calculated-price repository, and scheduled Excel publication through FTP to Salesforce.
 
@@ -75,7 +75,7 @@ Today, freight selling prices are calculated during a query or taken from a stor
 | ID | Requirement | Implementation status |
 | --- | --- | --- |
 | BR-01 | Maintain a central repository of buying rates by service, route, supplier, equipment, currency and validity | Implemented |
-| BR-02 | Give each rate an ID; uploaded existing IDs update, blank IDs insert | Implemented across all six upload types |
+| BR-02 | Give each rate an ID; uploaded existing IDs update, blank IDs insert | Implemented across all eight upload types |
 | BR-03 | Validate uploaded values and show creates/updates before saving | Implemented; atomic batch commit |
 | BR-04 | Support manual maintenance and CSV/XLSX uploads | Implemented |
 | BR-05 | Ingest rates from web/email RPA and an AI email reader | Planned; connectors and validation contracts required |
@@ -120,7 +120,7 @@ flowchart TD
 - **Service tariffs:** one charge record per row. Re-uploading a row with a blank ID creates another record. Duplicate existing IDs in a service upload are rejected.
 - Missing columns retain existing values on updates. Included blank optional cells clear their values. Required fields cannot be blank.
 - Uploads do not delete tariffs or charge lines. Rates linked to pricing requests must be edited through the request workspace.
-- CSV and the first worksheet of XLSX are supported, up to 5 MB and 5,000 data rows. Use the template headers. Legacy XLS and arbitrary supplier layouts are not supported.
+- CSV and the first worksheet of generic XLSX are supported; native SeaLocal/AirLocal imports use their named charge worksheets, up to 5 MB and 5,000 data rows. Use the template headers. Legacy XLS and arbitrary supplier layouts are not supported.
 - Dates accept `yyyy-mm-dd` or Excel date cells. Formula cells are rejected; upload values instead.
 - A preview makes no database changes. Its one-use token expires after 30 minutes or an API restart. Stale/conflicting commits reject the whole batch.
 
@@ -233,6 +233,8 @@ The integration team must agree full versus incremental export, FTP versus SFTP,
 | Menu | Route | Main purpose |
 | --- | --- | --- |
 | Freight tariffs | `/costs` | Maintain Sea FCL, Sea LCL and Air rates; uploads; carrier preferences and quota |
+| Sea local charges | `/sea-local-pricing` | SeaLocal charge lines, separate buying/selling fields and error remarks |
+| Air local charges | `/air-local-pricing` | AirLocal charge lines, separate buying/selling fields and error remarks |
 | Customs tariffs | `/customs-pricing` | Maintain customs charge rates and uploads |
 | Transport tariffs | `/transport-pricing` | Maintain Trucking and Cross-border charge rates and uploads |
 | Archive rates | `/archive-rates` | Open expired freight, customs and transport views |
@@ -265,7 +267,7 @@ The archive has direct routes `/archive-rates/freight`, `/archive-rates/customs`
 | AC-01 | Upload a valid record without ID | Preview shows Create; confirmation inserts a new record |
 | AC-02 | Upload a valid existing ID | Preview shows Update; confirmation changes that record, retaining omitted fields/charges |
 | AC-03 | Upload unknown ID, wrong service type or existing freight code with blank ID | Reject; do not silently insert or overwrite another record |
-| AC-04 | One row is invalid or a record changes after preview | Reject the batch without partial saves |
+| AC-04 | Legacy token preview has an invalid row or stale record | Reject that token batch atomically; staged imports use per-group transactions and local Error records |
 | AC-05 | Today equals ValidTo | Rate remains Current; appears in Archive the next UTC day |
 | AC-06 | ValidFrom is in the future | Rate appears in Upcoming, not Current or Archive |
 | AC-07 | Open Archive rates and select a category | Only expired records of that category are listed with IDs and dates |
@@ -305,7 +307,7 @@ npm run preview
 
 The development server uses port 5173. The production output is `dist/`.
 
-Development uses `/api` from `.env`; the Vite proxy forwards requests to
+Development uses `/api` from `.env.development`; the Vite proxy forwards requests to
 `http://localhost:5039`. Run the backend separately.
 
 Production builds use `.env.production`, which sets `VITE_API_BASE` to
@@ -338,3 +340,13 @@ components.json        shadcn registry configuration
 The frontend is the root of this Git repository. The workflow builds from `/` and publishes `dist` to Azure Static Web Apps. Pushes to `main` trigger deployment; configured pull-request events also run the workflow. Backend deployment is separate.
 
 Commit **new files as well as modified files**, especially `src/components/ui/`, `src/lib/utils.ts` and `components.json`. A successful local build can hide untracked files that are missing in CI. Review `git status --short` and verify the committed source before pushing. Monitor GitHub Actions for the actual deployment result; a successful push alone does not confirm a live release.
+
+## Current staged upload workflow (30 September 2026)
+
+The upload menu uses persistent staging, history and row correction. The token-preview flow described above remains a compatibility API, not the current menu workflow. Ready means validated; Success means committed. Incomplete SeaLocal/AirLocal rows may be imported as inactive Error records with source filename/row and precise errors in Remark. Download error report exports Failed/Error rows as CSV. Retry updates linked Error rates; Success and Skipped rows remain locked. Category pages must not show other service types.
+
+Account/customer columns resolve against salesforce_account: exact account ID first, otherwise name containment; multiple matches select the first account_id in ascending ordinal order and add a remark. No match reports ACCOUNT_NOT_FOUND. The UI displays Unit not set for missing units. Cost/Sell Minimum values are minimum charges, and Amount values are rates per unit; no maximum-charge fields exist. See [the shared import contract](../docs/import-data-contract.md) for details and limitations.
+
+Customs/transport location mapping: country selectors save master codes; port fields and transport Origin/Destination Location use UN/LOCODE lookup. Display names are resolved from stored codes. Province, city and postcode remain text. Unknown/ambiguous locations block new saves; legacy review remarks identify unresolved data without automatically deactivating it. See [field definitions and correction workflow](../docs/customs-transport-pricing.md#field-definitions-and-correction-workflow).
+
+The customs/transport location editor also offers **ALL / All locations**. ALL is valid on save/import and is normalized to uppercase; it does not remove country or other tariff restrictions. Display it as a wildcard rather than an unresolved master code. Unknown non-wildcard names still require correction. See [wildcard semantics](../docs/import-data-contract.md#all-location-wildcard).

@@ -7,7 +7,7 @@ export const CARGO_TYPE_OPTIONS = ['GENERAL', 'DG', 'PERISHABLE', 'VALUABLE', 'O
 export const ACCOUNT_TYPE_OPTIONS = ['DIRECT', 'AGENT', 'FORWARDER', 'BENEFICIAL CARGO OWNER'] as const;
 export const RATE_APPLY_BY_OPTIONS = ['ETD', 'ETA', 'SO Date', 'Gate-in Date'] as const;
 export const OCEAN_SERVICE_OPTIONS = ['Direct', 'Transshipment'] as const;
-export const INLAND_ROUTING_OPTIONS = ['Direct Port', 'IPI'] as const;
+export const INLAND_ROUTING_OPTIONS = ['Direct Port', 'IPI', 'RIPI'] as const;
 export const SERVICE_UOM_OPTIONS = [
   'PER CONTAINER',
   'PER CBM',

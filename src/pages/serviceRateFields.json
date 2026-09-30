@@ -33,5 +33,11 @@
   "sellCurrency": 3,
   "sellUom": 40,
   "sellRemark": 1000,
-  "chargeCode": 40
+  "chargeCode": 40,
+  "agent": 120,
+  "airlineCode": 2,
+  "chargeSide": 20,
+  "localCountry": 80,
+  "locationScope": 20,
+  "containerSize": 10
 }

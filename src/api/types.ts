@@ -51,6 +51,12 @@ export interface CostRate {
   oceanService: string | null;
   tsPort: string | null;
   inlandRouting: string | null;
+  deliveryType?: string | null;
+  inlandRoutingSource?: string | null;
+  inlandRoutingStatus?: string | null;
+  inlandRoutingReason?: string | null;
+  inlandRoutingRuleVersion?: string | null;
+  inlandRoutingOverrideReason?: string | null;
   containerType: string;
   unit: ChargeUnit;
   currency: string;

@@ -17,8 +17,8 @@ export default function ChargeMappingPage() {
       <h2>{draft.id ? 'Edit mapping' : 'Add mapping'}</h2>
       <div style={{display:'flex',gap:12,flexWrap:'wrap',alignItems:'end'}}>
         <label>Import template<input required maxLength={80} value={draft.importTemplate} onChange={e=>setDraft({...draft,importTemplate:e.target.value})}/></label>
-        <label>Import type<select value={draft.rateType} onChange={e=>setDraft({...draft,rateType:e.target.value,carrierCode:null})}>{['SeaFcl','SeaLcl','Air','Customs','Trucking','CrossBorder'].map(k=><option key={k}>{k}</option>)}</select></label>
-        <label>Carrier code (blank = general)<input maxLength={50} disabled={!['SeaFcl','SeaLcl','Air'].includes(draft.rateType)} value={draft.carrierCode||''} onChange={e=>setDraft({...draft,carrierCode:e.target.value||null})}/></label>
+        <label>Import type<select value={draft.rateType} onChange={e=>setDraft({...draft,rateType:e.target.value,carrierCode:null})}>{['SeaFcl','SeaLcl','Air','SeaLocal','AirLocal','Customs','Trucking','CrossBorder'].map(k=><option key={k}>{k}</option>)}</select></label>
+        <label>Carrier code (blank = general)<input maxLength={50} disabled={!['SeaFcl','SeaLcl','Air','SeaLocal','AirLocal'].includes(draft.rateType)} value={draft.carrierCode||''} onChange={e=>setDraft({...draft,carrierCode:e.target.value||null})}/></label>
         <label>Excel charge heading<input required maxLength={160} value={draft.sourceChargeName} onChange={e=>setDraft({...draft,sourceChargeName:e.target.value})}/></label>
         <label>Item code<input required maxLength={40} value={draft.itemCode} onChange={e=>setDraft({...draft,itemCode:e.target.value})}/></label>
         <label>Item name<input required maxLength={120} value={draft.itemName} onChange={e=>setDraft({...draft,itemName:e.target.value})}/></label>

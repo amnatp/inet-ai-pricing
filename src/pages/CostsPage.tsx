@@ -231,7 +231,7 @@ export default function CostsPage({ archiveOnly = false }: { archiveOnly?: boole
                 </TableCell>
                 <TableCell>{r.mode === 'Air' ? '—' : r.oceanService ?? '—'}</TableCell>
                 <TableCell>{r.mode === 'Air' || r.oceanService === 'Direct' ? '—' : <PortName value={r.tsPort ?? '—'} />}</TableCell>
-                <TableCell>{r.mode === 'Air' ? '—' : r.inlandRouting ?? '—'}</TableCell>
+                <TableCell>{r.mode === 'Air' ? '—' : r.inlandRouting ?? '—'}{r.inlandRoutingStatus === 'NeedsReview' && <div className="text-xs text-amber-700" title={r.inlandRoutingReason ?? undefined}>Needs review</div>}</TableCell>
                 <TableCell className="small muted">
                   {r.validFrom} → {r.validTo}
                 </TableCell>
@@ -456,7 +456,10 @@ export function CostEditor({
           <Field label="Rate apply by"><select value={form.rateApplyBy ?? ''} onChange={e => set('rateApplyBy', e.target.value || null)}><option value="">Not set</option>{dropdown('rate_apply_by', RATE_APPLY_BY_OPTIONS).map(o => <option key={o.value} value={o.value}>{o.label}</option>)}</select></Field>
           <Field label="Ocean service"><select value={form.oceanService ?? ''} onChange={e => setForm(f => ({ ...f, oceanService: e.target.value || null, tsPort: e.target.value === 'Direct' ? null : f.tsPort }))}><option value="">Not set</option>{dropdown('ocean_service', OCEAN_SERVICE_OPTIONS).map(o => <option key={o.value} value={o.value}>{o.label}</option>)}</select></Field>
           <Field label="T/S port"><PortInput mode={form.mode} value={form.tsPort ?? ''} disabled={form.oceanService === 'Direct'} onChange={value => set('tsPort', value || null)} /></Field>
-          <Field label="Inland routing"><select value={form.inlandRouting ?? ''} onChange={e => set('inlandRouting', e.target.value || null)}><option value="">Not set</option>{dropdown('inland_routing', INLAND_ROUTING_OPTIONS).map(o => <option key={o.value} value={o.value}>{o.label}</option>)}</select></Field>
+          <Field label="Delivery type"><select value={form.deliveryType ?? 'UNKNOWN'} onChange={e => set('deliveryType', e.target.value)}>{['UNKNOWN', 'PORT', 'INLAND_RAMP', 'DOOR'].map(v => <option key={v} value={v}>{v.replaceAll('_', ' ')}</option>)}</select></Field>
+          <Field label="Routing review"><div>{form.inlandRouting ?? 'Not set'} — {form.inlandRoutingStatus ?? 'Calculated on save'}</div><small>{form.inlandRoutingReason}</small></Field>
+          {form.inlandRoutingSource === 'Manual' && <Field label="Routing override reason"><input value={form.inlandRoutingOverrideReason ?? ''} onChange={e => set('inlandRoutingOverrideReason', e.target.value)} /></Field>}
+          <Field label="Inland routing"><select value={form.inlandRoutingSource === 'Rule' ? '' : form.inlandRouting ?? ''} onChange={e => setForm(f => ({ ...f, inlandRouting: e.target.value || null, inlandRoutingSource: e.target.value ? 'Manual' : 'Rule' }))}><option value="">Automatic / not set</option>{INLAND_ROUTING_OPTIONS.map(value => ({ value, label: value })).map(o => <option key={o.value} value={o.value}>{o.label}</option>)}</select></Field>
         </>}
         <Field label="Account ID" hint={form.recordType === 'RFQ' ? 'Required for RFQ rates' : 'Required for NAC rates'}>
           <Input

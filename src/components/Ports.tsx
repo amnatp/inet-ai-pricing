@@ -23,7 +23,7 @@ export function usePortNames(values: unknown[]) {
  return (value:unknown)=>{const text=String(value??'');return names[text.trim().toUpperCase()]??text;};
 }
 export function PortName({value}:{value:unknown}) { const label=usePortNames([value]);return <>{label(value)}</>; }
-export function PortInput({value,onChange,country,mode,field,required=false,disabled=false,ariaLabel}:{ariaLabel?:string;value:string;onChange:(v:string)=>void;country?:string|null;mode?:string|null;field?:string;required?:boolean;disabled?:boolean}) {
+export function PortInput({value,onChange,country,mode,field,required=false,disabled=false,ariaLabel,allowAll=false}:{allowAll?:boolean;ariaLabel?:string;value:string;onChange:(v:string)=>void;country?:string|null;mode?:string|null;field?:string;required?:boolean;disabled?:boolean}) {
  const label=usePortNames([value]); const {remember}=useContext(Context); const [options,setOptions]=useState<Port[]>([]); const id=useId();
  const [error,setError]=useState(''); const display=label(value);
  useEffect(()=>{
@@ -32,6 +32,6 @@ export function PortInput({value,onChange,country,mode,field,required=false,disa
   const timer=setTimeout(()=>{void api.ports({search:display,country:country??undefined,mode:mode??undefined,field}).then(rows=>{if(active){setOptions(rows);remember(rows);setError('');}}).catch(()=>{if(active)setError('Could not search ports.');});},200);
   return ()=>{active=false;clearTimeout(timer);};
  },[display,country,mode,field,disabled,remember]);
- return <><Input aria-label={ariaLabel} list={id} value={display} required={required} disabled={disabled} placeholder="Port name or UN/LOCODE" onChange={e=>{const text=e.target.value; const selected=options.find(p=>`${p.name} (${p.code})`===text);onChange(selected?.code??text);}}/>
- <datalist id={id}>{options.map(p=><option key={p.code} value={`${p.name} (${p.code})`}>{p.isSuggestion?"Possible match · ":""}{p.countryCode}{p.subdivision?` · ${p.subdivision}`:''}</option>)}</datalist>{error&&<span role="alert" className="small">{error}</span>}</>;
+ return <><Input aria-label={ariaLabel} list={id} value={display} required={required} disabled={disabled} placeholder={allowAll ? "ALL or location name / UN/LOCODE" : "Port name or UN/LOCODE"} onChange={e=>{const text=e.target.value; const selected=options.find(p=>`${p.name} (${p.code})`===text);onChange(selected?.code??text);}}/>
+ <datalist id={id}>{allowAll&&<option value="ALL">All locations</option>}{options.map(p=><option key={p.code} value={`${p.name} (${p.code})`}>{p.isSuggestion?"Possible match · ":""}{p.countryCode}{p.subdivision?` · ${p.subdivision}`:''}</option>)}</datalist>{error&&<span role="alert" className="small">{error}</span>}</>;
 }

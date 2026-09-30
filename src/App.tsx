@@ -1,4 +1,4 @@
-import { Archive, Container, ListChecks, Search, SlidersHorizontal, Truck, Warehouse } from 'lucide-react';
+import { Archive, Plane, Ship, Container, ListChecks, Search, SlidersHorizontal, Truck, Warehouse } from 'lucide-react';
 import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
 import ServiceRatesPage from './pages/ServiceRatesPage';
 import ArchiveRatesPage from './pages/ArchiveRatesPage';
@@ -15,6 +15,8 @@ export default function App() {
         <span className="brand"><span className="brand-icon"><Container size={19} /></span>Freight Pricing</span>
         <nav>
           <NavLink to="/costs"><Container size={15} aria-hidden="true" />Freight tariffs</NavLink>
+          <NavLink to="/sea-local-pricing"><Ship size={15} aria-hidden="true" />Sea local charges</NavLink>
+          <NavLink to="/air-local-pricing"><Plane size={15} aria-hidden="true" />Air local charges</NavLink>
           <NavLink to="/customs-pricing"><Warehouse size={15} aria-hidden="true" />Customs tariffs</NavLink>
           <NavLink to="/transport-pricing"><Truck size={15} aria-hidden="true" />Transport tariffs</NavLink>
           <NavLink to="/archive-rates"><Archive size={15} aria-hidden="true" />Archive rates</NavLink>
@@ -28,6 +30,8 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/costs" replace />} />
           <Route path="/costs" element={<CostsPage />} />
+          <Route path="/sea-local-pricing" element={<ServiceRatesPage key="sea-local" category="sea-local" />} />
+          <Route path="/air-local-pricing" element={<ServiceRatesPage key="air-local" category="air-local" />} />
           <Route path="/customs-pricing" element={<ServiceRatesPage key="customs" category="customs" />} />
           <Route path="/transport-pricing" element={<ServiceRatesPage key="transport" category="transport" />} />
           <Route path="/archive-rates/*" element={<ArchiveRatesPage />} />
